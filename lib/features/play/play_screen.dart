@@ -40,192 +40,180 @@ class PlayScreen extends ConsumerWidget {
         .firstOrNull;
 
     return Scaffold(
-      body: Column(
-        children: [
-          // Sticky header: bank tabs + connection chip stay fixed while scrolling
-          Container(
-            color: Theme.of(context).colorScheme.surface,
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-            child: Row(
-              children: [
-                Expanded(child: _BankBar(state: state)),
-                const SizedBox(width: 8),
-                _ConnectionChip(
-                  connected: connected,
-                  hasError:
-                      bridge.status == BridgeClientStatus.error ||
-                      bridge.lastError != null,
-                  deviceName: bridge.isConnected
-                      ? 'Bridge'
-                      : midi.selectedDevice?.name,
-                  onTap: onOpenSettings,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 6),
-          // Scrollable content area
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(12, 0, 12, 20),
-              children: [
-                // Channel selector — scrolls with content, not sticky
-                if (state.activeBank?.id == 'bank-instrument' ||
-                    state.activeBank?.id == 'bank-performance') ...[
-                  _LeadChannelBar(
-                    leadChannel: controlsCtrl.leadChannel,
-                    onSelect: controlsCtrl.setLeadChannel,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Sticky header: bank tabs + connection chip stay fixed while scrolling
+            Container(
+              color: Theme.of(context).colorScheme.surface,
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+              child: Row(
+                children: [
+                  Expanded(child: _BankBar(state: state)),
+                  const SizedBox(width: 8),
+                  _ConnectionChip(
+                    connected: connected,
+                    hasError:
+                        bridge.status == BridgeClientStatus.error ||
+                        bridge.lastError != null,
+                    deviceName: bridge.isConnected
+                        ? 'Bridge'
+                        : midi.selectedDevice?.name,
+                    onTap: onOpenSettings,
                   ),
-                  const SizedBox(height: 6),
                 ],
-                if (!connected)
-                  Card(
-                    color: Theme.of(context).colorScheme.surfaceContainerHighest
-                        .withValues(alpha: 0.5),
-                    child: ListTile(
-                      leading: Icon(
-                        Icons.link_off,
-                        color: Theme.of(context).colorScheme.error,
-                      ),
-                      title: const Text('No MIDI device connected'),
-                      subtitle: const Text(
-                        'Controls are disabled. Connect in Settings.',
+              ),
+            ),
+            const SizedBox(height: 6),
+            // Scrollable content area
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(12, 0, 12, 20),
+                children: [
+                  // Channel selector — scrolls with content, not sticky
+                  if (state.activeBank?.id == 'bank-instrument' ||
+                      state.activeBank?.id == 'bank-performance') ...[
+                    _LeadChannelBar(
+                      leadChannel: controlsCtrl.leadChannel,
+                      onSelect: controlsCtrl.setLeadChannel,
+                    ),
+                    const SizedBox(height: 6),
+                  ],
+                  if (!connected)
+                    Card(
+                      color: Theme.of(context).colorScheme.surfaceContainerHighest
+                          .withValues(alpha: 0.5),
+                      child: ListTile(
+                        leading: Icon(
+                          Icons.link_off,
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                        title: const Text('No MIDI device connected'),
+                        subtitle: const Text(
+                          'Controls are disabled. Connect in Settings.',
+                        ),
                       ),
                     ),
-                  ),
-                if (controls.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 48),
-                    child: Center(child: Text('This bank is empty.')),
-                  )
-                else ...[
-                  // Layer Volume Faders with On/Off toggles (Primary - Kontakt)
-                  _Section(
-                    title: 'Layer Volumes',
-                    horizontal: true,
-                    height: 252,
-                    children: [
-                      for (final c in controls.where(
-                        (c) => c.id.startsWith('layer-vol-'),
-                      ))
-                        _layerTile(context, ref, c, controls, controlsCtrl, connected),
-                    ],
-                  ),
-                  // Continuous Pads — assignable CC toggles for the Kontakt
-                  // library's pad/drone controls (chromatic C-B labels).
-                  if (padControls.isNotEmpty) ...[
+                  if (controls.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 48),
+                      child: Center(child: Text('This bank is empty.')),
+                    )
+                  else ...[
+                    // Layer Volume Faders with On/Off toggles (Primary - Kontakt)
                     _Section(
-                      title: 'Continuous Pads',
-                      children: [_padGrid(context, padControls, controlsCtrl, connected)],
+                      title: 'Layer Volumes',
+                      horizontal: true,
+                      height: 252,
+                      children: [
+                        for (final c in controls.where(
+                          (c) => c.id.startsWith('layer-vol-'),
+                        ))
+                          _layerTile(context, ref, c, controls, controlsCtrl, connected),
+                      ],
                     ),
-                    if (padVolumeControl != null)
+                    // Continuous Pads — assignable CC toggles for the Kontakt
+                    // library's pad/drone controls (chromatic C-B labels).
+                    if (padControls.isNotEmpty) ...[
                       _Section(
-                        title: 'Pad Volume',
-                        height: 200,
+                        title: 'Continuous Pads',
+                        children: [_padGrid(context, padControls, controlsCtrl, connected)],
+                      ),
+                      if (padVolumeControl != null)
+                        _Section(
+                          title: 'Pad Volume',
+                          horizontal: true,
+                          height: 180,
+                          children: [
+                            _faderTile(
+                              context,
+                              ref,
+                              padVolumeControl,
+                              controlsCtrl,
+                              connected,
+                            ),
+                          ],
+                        ),
+                    ],
+                    // Drum Pads — momentary pads assignable to drum articulations
+                    if (drumControls.isNotEmpty)
+                      _Section(
+                        title: 'Drum Pads',
                         children: [
-                          Center(
+                          _drumGrid(context, drumControls, controlsCtrl, connected),
+                        ],
+                      ),
+                    // Performance Controls Section (Knobs, Modulation, etc.)
+                    _Section(
+                      title: state.activeBank?.name ?? 'Performance',
+                      horizontal: true,
+                      children: [
+                        for (final c in controls.where(
+                          (c) => c.type == MidiControlType.knob &&
+                              !c.id.startsWith('part-pan-') &&
+                              !c.id.startsWith('mix-pan-'),
+                        ))
+                          _knobTile(context, ref, c, controlsCtrl, connected),
+                      ],
+                    ),
+                    // Channel Volume Faders (Part volumes)
+                    _Section(
+                      title: 'Channel Volumes',
+                      horizontal: true,
+                      children: [
+                        for (final c in controls.where(
+                          (c) => c.type == MidiControlType.fader &&
+                              !c.id.startsWith('layer-vol-'),
+                        ))
+                          _faderTile(context, ref, c, controlsCtrl, connected),
+                      ],
+                    ),
+                    _Section(
+                      title: 'XY Pad',
+                      children: [
+                        for (final c in controls.where(
+                          (c) => c.type == MidiControlType.xyPad,
+                        ))
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 8,
+                            ),
                             child: SizedBox(
-                              width: 80,
-                              height: 160,
-                              child: GestureDetector(
-                                onLongPress: () => _showRenameDialog(
-                                  context,
-                                  padVolumeControl,
-                                  controlsCtrl,
-                                ),
-                                child: FaderControl(
-                                  label: padVolumeControl.label,
-                                  value: padVolumeControl.normalizedValue,
-                                  midiValue: padVolumeControl.currentMidiValue,
-                                  enabled: connected,
-                                  onChanged: (v) => unawaited(
-                                    controlsCtrl.setNormalized(padVolumeControl, v),
-                                  ),
-                                ),
+                              width: 340,
+                              child: XyPadControl(
+                                label: c.label,
+                                xValue: c.normalizedValue,
+                                yValue: c.yNormalized,
+                                enabled: connected,
+                                onChanged: (x, y) =>
+                                    unawaited(controlsCtrl.setXY(c, x, y)),
                               ),
                             ),
                           ),
-                        ],
-                      ),
-                  ],
-                  // Drum Pads — momentary pads assignable to drum articulations
-                  if (drumControls.isNotEmpty)
-                    _Section(
-                      title: 'Drum Pads',
-                      children: [
-                        _drumGrid(context, drumControls, controlsCtrl, connected),
                       ],
                     ),
-                  // Performance Controls Section (Knobs, Modulation, etc.)
-                  _Section(
-                    title: state.activeBank?.name ?? 'Performance',
-                    horizontal: true,
-                    children: [
-                      for (final c in controls.where(
-                        (c) => c.type == MidiControlType.knob &&
-                            !c.id.startsWith('part-pan-') &&
-                            !c.id.startsWith('mix-pan-'),
-                      ))
-                        _knobTile(context, ref, c, controlsCtrl, connected),
-                    ],
-                  ),
-                  // Channel Volume Faders (Part volumes)
-                  _Section(
-                    title: 'Channel Volumes',
-                    horizontal: true,
-                    children: [
-                      for (final c in controls.where(
-                        (c) => c.type == MidiControlType.fader &&
-                            !c.id.startsWith('layer-vol-'),
-                      ))
-                        _faderTile(context, ref, c, controlsCtrl, connected),
-                    ],
-                  ),
-                  _Section(
-                    title: 'XY Pad',
-                    children: [
-                      for (final c in controls.where(
-                        (c) => c.type == MidiControlType.xyPad,
-                      ))
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 8,
-                          ),
-                          child: SizedBox(
-                            width: 340,
-                            child: XyPadControl(
-                              label: c.label,
-                              xValue: c.normalizedValue,
-                              yValue: c.yNormalized,
-                              enabled: connected,
-                              onChanged: (x, y) =>
-                                  unawaited(controlsCtrl.setXY(c, x, y)),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  _Section(
-                    title: 'Buttons',
-                    children: [
-                      for (final c in controls.where(
-                        (c) =>
-                            c.type != MidiControlType.fader &&
-                            c.type != MidiControlType.knob &&
-                            c.type != MidiControlType.xyPad &&
-                            !c.id.startsWith('layer-toggle-') &&
-                            !c.id.startsWith('pad-') &&
-                            !c.id.startsWith('drum-'),
-                      ))
-                        _buttonTile(context, ref, c, controlsCtrl, connected),
-                    ],
-                  ),
+                    _Section(
+                      title: 'Buttons',
+                      children: [
+                        for (final c in controls.where(
+                          (c) =>
+                              c.type != MidiControlType.fader &&
+                              c.type != MidiControlType.knob &&
+                              c.type != MidiControlType.xyPad &&
+                              !c.id.startsWith('layer-toggle-') &&
+                              !c.id.startsWith('pad-') &&
+                              !c.id.startsWith('drum-'),
+                        ))
+                          _buttonTile(context, ref, c, controlsCtrl, connected),
+                      ],
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -285,18 +273,11 @@ class PlayScreen extends ConsumerWidget {
               for (var col = 0; col < 6; col++) ...[
                 if (col > 0) const SizedBox(width: 10),
                 Expanded(
-                  child: GestureDetector(
-                    onLongPress: () => _showRenameDialog(
-                      context,
-                      pads[row * 6 + col],
-                      ctrl,
-                    ),
-                    child: _PadTile(
-                      control: pads[row * 6 + col],
-                      enabled: connected,
-                      onToggle: () =>
-                          unawaited(ctrl.buttonToggle(pads[row * 6 + col])),
-                    ),
+                  child: _PadTile(
+                    control: pads[row * 6 + col],
+                    enabled: connected,
+                    onToggle: () =>
+                        unawaited(ctrl.buttonToggle(pads[row * 6 + col])),
                   ),
                 ),
               ],
@@ -323,20 +304,13 @@ class PlayScreen extends ConsumerWidget {
               for (var col = 0; col < 4; col++) ...[
                 if (col > 0) const SizedBox(width: 10),
                 Expanded(
-                  child: GestureDetector(
-                    onLongPress: () => _showRenameDialog(
-                      context,
-                      drums[row * 4 + col],
-                      ctrl,
-                    ),
-                    child: _DrumPad(
-                      label: drums[row * 4 + col].label,
-                      enabled: connected,
-                      onPress: () =>
-                          unawaited(ctrl.buttonPress(drums[row * 4 + col])),
-                      onRelease: () =>
-                          unawaited(ctrl.buttonRelease(drums[row * 4 + col])),
-                    ),
+                  child: _DrumPad(
+                    label: drums[row * 4 + col].label,
+                    enabled: connected,
+                    onPress: () =>
+                        unawaited(ctrl.buttonPress(drums[row * 4 + col])),
+                    onRelease: () =>
+                        unawaited(ctrl.buttonRelease(drums[row * 4 + col])),
                   ),
                 ),
               ],
@@ -733,29 +707,14 @@ class _DrumPadState extends State<_DrumPad> {
               width: _pressed ? 2 : 1,
             ),
           ),
-          child: Stack(
-            children: [
-              Center(
-                child: Text(
-                  widget.label,
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: _pressed ? scheme.primary : scheme.onSurface,
-                      ),
-                ),
-              ),
-              // Small edit icon in corner to indicate rename capability
-              if (!_pressed)
-                Positioned(
-                  top: 4,
-                  right: 4,
-                  child: Icon(
-                    Icons.edit,
-                    size: 12,
-                    color: scheme.onSurfaceVariant.withValues(alpha: 0.5),
+          child: Center(
+            child: Text(
+              widget.label,
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: _pressed ? scheme.primary : scheme.onSurface,
                   ),
-                ),
-            ],
+            ),
           ),
         ),
       ),
@@ -808,28 +767,14 @@ class _PadTile extends StatelessWidget {
                     ]
                   : null,
             ),
-            child: Stack(
-              children: [
-                Center(
-                  child: Text(
-                    control.label,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: active ? scheme.primary : scheme.onSurface,
-                        ),
-                  ),
-                ),
-                // Small edit icon in corner to indicate rename capability
-                Positioned(
-                  top: 4,
-                  right: 4,
-                  child: Icon(
-                    Icons.edit,
-                    size: 12,
-                    color: scheme.onSurfaceVariant.withValues(alpha: 0.5),
-                  ),
-                ),
-              ],
+            child: Center(
+              child: Text(
+                control.label,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: active ? scheme.primary : scheme.onSurface,
+                    ),
+              ),
             ),
           ),
         ),
