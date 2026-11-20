@@ -61,10 +61,10 @@ class ControlsController extends Notifier<ControlsState> {
       banks: [
         ControlBankTemplates.instrument(),
         ControlBankTemplates.transport(),
-        ControlBankTemplates.performance(),
         ControlBankTemplates.drums(),
-        ControlBankTemplates.effects(),
         ControlBankTemplates.mixer(),
+        ControlBankTemplates.performance(),
+        ControlBankTemplates.effects(),
       ],
       activeBankIndex: 0,
       selectedControlId: 'layer-vol-1',

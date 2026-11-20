@@ -46,7 +46,10 @@ as the desktop bridge that creates a real MIDI device your DAW can see.
 2. **Phone** — install the app (Android APK in `setup/`, or
    `flutter run` on iOS). Settings → Connect to computer → enter the
    laptop address + token. Same Wi-Fi network required.
-3. **DAW** — see below.
+3. **Important** — if you switch Wi-Fi networks (home, church, hotspot),
+   the laptop IP address changes. Always check the Desktop Bridge screen
+   and update the address on the phone before connecting.
+4. **DAW** — see below.
 
 ---
 

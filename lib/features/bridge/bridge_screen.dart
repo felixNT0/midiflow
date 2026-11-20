@@ -203,6 +203,10 @@ class _DawInstructionsCard extends StatelessWidget {
               'Enter the laptop address and token shown above, then tap '
                   'Connect. Both devices must be on the same Wi-Fi '
                   'network.',
+              'Important: if you switch Wi-Fi networks (home, church, '
+                  'hotspot), the laptop IP address will change — always '
+                  'check this screen and update the address on the phone '
+                  'before connecting.',
               'Windows laptops: install loopMIDI or Windows MIDI '
                   'Services first so a virtual MIDI port can be created.',
             ],

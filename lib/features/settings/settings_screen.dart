@@ -136,6 +136,8 @@ class SettingsScreen extends ConsumerWidget {
               ),
             ),
           ),
+          const SizedBox(height: 16),
+          const _SetupGuidesCard(),
         ],
       ),
     );
@@ -407,6 +409,127 @@ class _KontaktSetupCardState extends State<_KontaktSetupCard> {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Setup guides for connecting the phone/tablet to the laptop and DAW-specific
+/// instructions. Available on all platforms (mobile and desktop).
+class _SetupGuidesCard extends StatelessWidget {
+  const _SetupGuidesCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+      child: Column(
+        children: const [
+          _GuideTile(
+            title: '1 · Connect phone to computer',
+            steps: [
+              'Keep the Desktop Bridge screen open on the laptop — the bridge '
+                  'starts automatically and shows a pairing token and '
+                  'network address.',
+              'On the phone, open Settings → Connect to computer.',
+              'Enter the laptop address and token shown on the laptop, then '
+                  'tap Connect. Both devices must be on the same Wi-Fi '
+                  'network.',
+              'Important: if you switch Wi-Fi networks (home, church, '
+                  'hotspot), the laptop IP address will change — always '
+                  'check the Desktop Bridge screen and update the address '
+                  'on the phone before connecting.',
+              'Windows laptops: install loopMIDI or Windows MIDI '
+                  'Services first so a virtual MIDI port can be created.',
+            ],
+          ),
+          Divider(height: 1),
+          _GuideTile(
+            title: '2 · FL Studio setup',
+            steps: [
+              'Install the controller script: copy device_midiflow.py '
+                  'into FL Studio\'s user data folder at '
+                  'Settings/Hardware/MIDIFlow/ (create the folder if '
+                  'missing), then restart FL Studio.',
+              'Options → MIDI Settings → Input = "MIDIFlow Bridge", '
+                  'Controller type = "MIDIFlow".',
+              'Transport, mixer and channel-rack controls work '
+                  'automatically through the script — nothing else to '
+                  'configure for those.',
+              'For Kontakt/VST instruments: open the plugin wrapper '
+                  'settings → MIDI tab → set Input port = 10. This lets '
+                  'the script deliver instrument CCs as real MIDI.',
+              'In Kontakt, assign controls with right-click → Learn '
+                  'MIDI CC: layer faders CC20-27, layer on/off CC28-35, '
+                  'pads CC36-47, drums CC48-63, FX CC96-107 (all on '
+                  'MIDI channel 1, or the Part channel you select).',
+            ],
+          ),
+          Divider(height: 1),
+          _GuideTile(
+            title: '3 · Logic Pro setup',
+            steps: [
+              'No script needed — "MIDIFlow Bridge" appears as a normal '
+                  'MIDI input automatically.',
+              'Logic Pro → Settings → MIDI → enable "MIDIFlow Bridge" '
+                  'as an input device.',
+              'Create a Software Instrument track with Kontakt — it '
+                  'receives MIDI from the enabled input directly.',
+              'Kontakt Learn works with no extra setup: right-click a '
+                  'control → Learn MIDI CC, then move the matching '
+                  'MIDIFlow control.',
+              'Transport and mixer controls are not scriptable in '
+                  'Logic — assign them once in Logic\'s Controller '
+                  'Assignments (Environment → Controller Environment, '
+                  'learn mode) using the same CCs the FL Studio script '
+                  'uses: ch16 CC30 play/pause, CC31 stop, CC32 record, '
+                  'CC14 master volume.',
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GuideTile extends StatelessWidget {
+  const _GuideTile({required this.title, required this.steps});
+
+  final String title;
+  final List<String> steps;
+
+  @override
+  Widget build(BuildContext context) {
+    return ExpansionTile(
+      tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      title: Text(
+        title,
+        style: const TextStyle(fontWeight: FontWeight.bold),
+      ),
+      children: [
+        for (var i = 0; i < steps.length; i++)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: 20,
+                  child: Text(
+                    '${i + 1}.',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    steps[i],
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
     );
   }
 }

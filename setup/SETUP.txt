@@ -44,6 +44,10 @@ STEP 2 — CONNECT PHONE TO LAPTOP (one time)
   3. Enter the laptop address and token, tap Connect.
   4. Both devices must be on the same Wi-Fi network.
 
+  Important: if you switch Wi-Fi networks (home, church, hotspot), the
+  laptop IP address will change — always check the Desktop Bridge screen
+  and update the address on the phone before connecting.
+
   The laptop now exposes a virtual MIDI device named "MIDIFlow Bridge".
 
 
