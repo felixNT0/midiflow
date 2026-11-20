@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../application/midi/midi_provider.dart';
 import '../../domain/midi/control_bank.dart';
@@ -53,8 +55,10 @@ class ControlsState {
 }
 
 /// Holds the in-memory control layout and routes control gestures to the
-/// MIDI engine. Persistence arrives with the profiles milestone.
+/// MIDI engine. Persists control labels and values to SharedPreferences.
 class ControlsController extends Notifier<ControlsState> {
+  static const _prefsKey = 'midiflow_controls_v1';
+
   @override
   ControlsState build() {
     return ControlsState(
@@ -69,6 +73,88 @@ class ControlsController extends Notifier<ControlsState> {
       activeBankIndex: 0,
       selectedControlId: 'layer-vol-1',
     );
+  }
+
+  /// Loads persisted control labels and values from SharedPreferences.
+  /// Call this after the provider is first built.
+  Future<void> loadPersisted() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final json = prefs.getString(_prefsKey);
+      if (json == null || json.isEmpty) return;
+
+      final data = jsonDecode(json) as Map<String, dynamic>;
+      final banks = <ControlBank>[];
+
+      for (final bankData in (data['banks'] as List).cast<Map<String, dynamic>>()) {
+        final controls = <MidiControl>[];
+        for (final ctrlData in (bankData['controls'] as List).cast<Map<String, dynamic>>()) {
+          final control = MidiControl(
+            id: ctrlData['id'] as String,
+            label: ctrlData['label'] as String,
+            type: MidiControlType.values.firstWhere(
+              (t) => t.name == ctrlData['type'],
+            ),
+            mapping: ControlMapping(
+              channel: ctrlData['channel'] as int,
+              controller: ctrlData['controller'] as int,
+            ),
+            normalizedValue: (ctrlData['normalizedValue'] as num?)?.toDouble() ?? 0.0,
+          );
+          controls.add(control);
+        }
+        banks.add(ControlBank(
+          id: bankData['id'] as String,
+          name: bankData['name'] as String,
+          controls: controls,
+        ));
+      }
+
+      state = ControlsState(
+        banks: banks,
+        activeBankIndex: (data['activeBankIndex'] as num?)?.toInt() ?? 0,
+        selectedControlId: data['selectedControlId'] as String?,
+      );
+    } catch (e) {
+      // Persistence load failed — keep default state
+    }
+  }
+
+  /// Saves control labels and values to SharedPreferences.
+  Future<void> savePersisted() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final banksData = <Map<String, dynamic>>[];
+
+      for (final bank in state.banks) {
+        final controlsData = <Map<String, dynamic>>[];
+        for (final ctrl in bank.controls) {
+          controlsData.add({
+            'id': ctrl.id,
+            'label': ctrl.label,
+            'type': ctrl.type.name,
+            'channel': ctrl.mapping.channel,
+            'controller': ctrl.mapping.controller,
+            'normalizedValue': ctrl.normalizedValue,
+          });
+        }
+        banksData.add({
+          'id': bank.id,
+          'name': bank.name,
+          'controls': controlsData,
+        });
+      }
+
+      final data = {
+        'banks': banksData,
+        'activeBankIndex': state.activeBankIndex,
+        'selectedControlId': state.selectedControlId,
+      };
+
+      await prefs.setString(_prefsKey, jsonEncode(data));
+    } catch (e) {
+      // Persistence save failed — ignore
+    }
   }
 
   // ------------------------------------------------------------------ banks
@@ -90,6 +176,7 @@ class ControlsController extends Notifier<ControlsState> {
       activeBankIndex: state.banks.length,
       clearSelection: true,
     );
+    unawaited(savePersisted());
   }
 
   void renameBank(int index, String name) {
@@ -97,6 +184,7 @@ class ControlsController extends Notifier<ControlsState> {
     final banks = [...state.banks];
     banks[index] = banks[index].copyWith(name: name.trim());
     state = state.copyWith(banks: banks);
+    unawaited(savePersisted());
   }
 
   void removeBank(int index) {
@@ -115,6 +203,7 @@ class ControlsController extends Notifier<ControlsState> {
       activeBankIndex: active,
       clearSelection: true,
     );
+    unawaited(savePersisted());
   }
 
   // ---------------------------------------------------------------- controls
@@ -138,6 +227,18 @@ class ControlsController extends Notifier<ControlsState> {
         for (final c in controls) c.id == updated.id ? updated : c,
       ],
     );
+    unawaited(savePersisted());
+  }
+
+  /// Updates only the label of a control.
+  void updateControlLabel(String id, String newLabel) {
+    _updateActiveBank(
+      (controls) => [
+        for (final c in controls)
+          c.id == id ? c.copyWith(label: newLabel) : c,
+      ],
+    );
+    unawaited(savePersisted());
   }
 
   void addControl(MidiControlType type) {
@@ -156,6 +257,7 @@ class ControlsController extends Notifier<ControlsState> {
     );
     _updateActiveBank((controls) => [...controls, control]);
     state = state.copyWith(selectedControlId: id);
+    unawaited(savePersisted());
   }
 
   void removeControl(String id) {
@@ -168,6 +270,7 @@ class ControlsController extends Notifier<ControlsState> {
     if (state.selectedControlId == id) {
       state = state.copyWith(clearSelection: true);
     }
+    unawaited(savePersisted());
   }
 
   /// Ids of the Instrument bank's "lead" performance controls — these
@@ -216,6 +319,7 @@ class ControlsController extends Notifier<ControlsState> {
     'pad-10',
     'pad-11',
     'pad-12',
+    'pad-volume',
   };
 
   /// Current lead channel (1-16) used by the Instrument/Performance
@@ -334,6 +438,7 @@ class ControlsController extends Notifier<ControlsState> {
   Future<void> setNormalized(MidiControl control, double normalized) async {
     _updateNormalized(control, normalized);
     await sendControl(control.copyWith(normalizedValue: normalized));
+    unawaited(savePersisted());
   }
 
   /// XY pad gesture entry point: updates both axes and sends both CCs.
@@ -347,6 +452,7 @@ class ControlsController extends Notifier<ControlsState> {
       xNormalized: x,
       yNormalized: y,
     );
+    unawaited(savePersisted());
   }
 
   /// Momentary button: sends on value at press, off value at release.
@@ -361,6 +467,7 @@ class ControlsController extends Notifier<ControlsState> {
     final on = control.normalizedValue >= 0.5;
     await _sendButtonValue(control, down: !on);
     _updateNormalized(control, on ? 0.0 : 1.0);
+    unawaited(savePersisted());
   }
 
   Future<void> _sendButtonValue(MidiControl control, {required bool down}) {

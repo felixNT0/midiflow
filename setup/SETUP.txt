@@ -35,6 +35,10 @@ STEP 1 — INSTALL THE APPS
   Windows also needs loopMIDI (https://www.tobias-erichsen.de/loopmidi.html)
   or Windows MIDI Services so the virtual "MIDIFlow Bridge" port exists.
 
+  Note: this project requires Flutter 3.50.1+ (or compatible stable).
+  If building from source, run `flutter upgrade` first to get the latest
+  stable version that supports Xcode 26+.
+
 
 STEP 2 — CONNECT PHONE TO LAPTOP (one time)
 -------------------------------------------

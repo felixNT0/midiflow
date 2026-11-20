@@ -3,8 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/midi/bridge_provider.dart';
+import '../../application/midi/controls_provider.dart';
 import '../../application/midi/midi_provider.dart';
 import '../../application/settings/theme_mode_provider.dart';
+import '../../domain/midi/control_bank.dart';
+import '../../domain/midi/midi_control.dart';
 import '../../infrastructure/midi/midi_service.dart';
 import '../../infrastructure/midi/network/bridge_client.dart';
 import '../../infrastructure/midi/network/bridge_protocol.dart';
@@ -138,6 +141,8 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
           const _SetupGuidesCard(),
+          const SizedBox(height: 16),
+          const _ControlLabelsCard(),
         ],
       ),
     );
@@ -530,6 +535,137 @@ class _GuideTile extends StatelessWidget {
             ),
           ),
       ],
+    );
+  }
+}
+
+/// Card for renaming control labels (layer faders, pads, etc.) after assignment.
+class _ControlLabelsCard extends ConsumerWidget {
+  const _ControlLabelsCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(controlsProvider);
+    final controlsCtrl = ref.read(controlsProvider.notifier);
+
+    // Group controls by bank for easier navigation
+    final banks = state.banks;
+
+    return Card(
+      child: ExpansionTile(
+        tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+        title: const Text(
+          'Rename Controls',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        subtitle: const Text(
+          'Tap a control to rename it (e.g., Layer 1 → Piano, Pad C → Pad 1)',
+        ),
+        children: [
+          for (final bank in banks)
+            _BankLabelsSection(
+              bank: bank,
+              onRename: (controlId, newLabel) =>
+                  controlsCtrl.updateControlLabel(controlId, newLabel),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BankLabelsSection extends StatelessWidget {
+  const _BankLabelsSection({
+    required this.bank,
+    required this.onRename,
+  });
+
+  final ControlBank bank;
+  final void Function(String controlId, String newLabel) onRename;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 12, bottom: 8),
+          child: Text(
+            bank.name,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+          ),
+        ),
+        for (final control in bank.controls)
+          _ControlLabelTile(
+            control: control,
+            onRename: (newLabel) => onRename(control.id, newLabel),
+          ),
+      ],
+    );
+  }
+}
+
+class _ControlLabelTile extends StatelessWidget {
+  const _ControlLabelTile({
+    required this.control,
+    required this.onRename,
+  });
+
+  final MidiControl control;
+  final void Function(String newLabel) onRename;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      dense: true,
+      contentPadding: EdgeInsets.zero,
+      title: Text(control.label),
+      subtitle: Text(
+        '${control.type.name} · ch${control.mapping.channel} CC${control.mapping.controller}',
+        style: Theme.of(context).textTheme.bodySmall,
+      ),
+      trailing: IconButton(
+        icon: const Icon(Icons.edit, size: 18),
+        onPressed: () => _showRenameDialog(context),
+      ),
+    );
+  }
+
+  void _showRenameDialog(BuildContext context) {
+    final controller = TextEditingController(text: control.label);
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Rename Control'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            labelText: 'New name',
+            hintText: 'e.g., Piano, Pad 1, Reverb',
+          ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              final newLabel = controller.text.trim();
+              if (newLabel.isNotEmpty) {
+                onRename(newLabel);
+              }
+              Navigator.of(context).pop();
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
     );
   }
 }

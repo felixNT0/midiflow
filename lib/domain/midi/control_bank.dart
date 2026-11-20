@@ -78,6 +78,18 @@ abstract final class ControlBankTemplates {
       );
     }
 
+    // Pad volume fader — CC48 on channel 1, master volume for continuous pads.
+    // Assign this to the Kontakt library's pad volume control.
+    controls.add(
+      MidiControl(
+        id: 'pad-volume',
+        label: 'Pad Vol',
+        type: MidiControlType.fader,
+        mapping: const ControlMapping(channel: 1, controller: 48),
+        normalizedValue: 0.8,
+      ),
+    );
+
     // Part volume faders and pan knobs (for multi-part instruments)
     for (var i = 1; i <= 8; i++) {
       controls.add(

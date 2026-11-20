@@ -5,9 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app/app_shell.dart';
-import 'features/bridge/bridge_screen.dart';
 import 'application/midi/bridge_provider.dart';
+import 'application/midi/controls_provider.dart';
 import 'application/settings/theme_mode_provider.dart';
+import 'features/bridge/bridge_screen.dart';
 import 'shared/theme/app_theme.dart';
 
 void main() {
@@ -30,6 +31,8 @@ class MidiFlowApp extends ConsumerWidget {
     final themeMode = ref.watch(themeModeProvider);
     // Instantiates the desktop bridge provider so it auto-starts.
     ref.watch(bridgeServerProvider);
+    // Load persisted control labels and values on first build.
+    ref.read(controlsProvider.notifier).loadPersisted();
     return MaterialApp(
       title: 'MIDIFlow',
       debugShowCheckedModeBanner: false,

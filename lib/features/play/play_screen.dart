@@ -35,6 +35,9 @@ class PlayScreen extends ConsumerWidget {
     final drumControls = controls
         .where((c) => c.id.startsWith('drum-'))
         .toList();
+    final padVolumeControl = controls
+        .where((c) => c.id == 'pad-volume')
+        .firstOrNull;
 
     return Scaffold(
       appBar: AppBar(
@@ -54,133 +57,164 @@ class PlayScreen extends ConsumerWidget {
           const SizedBox(width: 8),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(12, 8, 12, 20),
+      body: Column(
         children: [
-          _BankBar(state: state),
-          if (state.activeBank?.id == 'bank-instrument' ||
-              state.activeBank?.id == 'bank-performance') ...[
-            const SizedBox(height: 6),
-            _LeadChannelBar(
-              leadChannel: controlsCtrl.leadChannel,
-              onSelect: controlsCtrl.setLeadChannel,
-            ),
-          ],
-          const SizedBox(height: 6),
-          if (!connected)
-            Card(
-              color: Theme.of(context).colorScheme.surfaceContainerHighest
-                  .withValues(alpha: 0.5),
-              child: ListTile(
-                leading: Icon(
-                  Icons.link_off,
-                  color: Theme.of(context).colorScheme.error,
-                ),
-                title: const Text('No MIDI device connected'),
-                subtitle: const Text(
-                  'Controls are disabled. Connect in Settings.',
-                ),
-              ),
-            ),
-          if (controls.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 48),
-              child: Center(child: Text('This bank is empty.')),
-            )
-          else ...[
-            // Layer Volume Faders with On/Off toggles (Primary - Kontakt)
-            _Section(
-              title: 'Layer Volumes',
-              horizontal: true,
-              height: 252,
+          // Sticky header: bank tabs + channel selector stay fixed while scrolling
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+            child: Column(
               children: [
-                for (final c in controls.where(
-                  (c) => c.id.startsWith('layer-vol-'),
-                ))
-                  _layerTile(context, ref, c, controls, controlsCtrl, connected),
-              ],
-            ),
-            // Continuous Pads — assignable CC toggles for the Kontakt
-            // library's pad/drone controls (chromatic C-B labels).
-            if (padControls.isNotEmpty)
-              _Section(
-                title: 'Continuous Pads',
-                children: [_padGrid(padControls, controlsCtrl, connected)],
-              ),
-            // Drum Pads — momentary pads assignable to drum articulations
-            if (drumControls.isNotEmpty)
-              _Section(
-                title: 'Drum Pads',
-                children: [
-                  _drumGrid(drumControls, controlsCtrl, connected),
+                _BankBar(state: state),
+                if (state.activeBank?.id == 'bank-instrument' ||
+                    state.activeBank?.id == 'bank-performance') ...[
+                  const SizedBox(height: 6),
+                  _LeadChannelBar(
+                    leadChannel: controlsCtrl.leadChannel,
+                    onSelect: controlsCtrl.setLeadChannel,
+                  ),
                 ],
-              ),
-            // Performance Controls Section (Knobs, Modulation, etc.)
-            _Section(
-              title: state.activeBank?.name ?? 'Performance',
-              horizontal: true,
-              children: [
-                for (final c in controls.where(
-                  (c) => c.type == MidiControlType.knob &&
-                      !c.id.startsWith('part-pan-') &&
-                      !c.id.startsWith('mix-pan-'),
-                ))
-                  _knobTile(context, ref, c, controlsCtrl, connected),
+                const SizedBox(height: 6),
               ],
             ),
-            // Channel Volume Faders (Part volumes)
-            _Section(
-              title: 'Channel Volumes',
-              horizontal: true,
+          ),
+          // Scrollable content area
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 20),
               children: [
-                for (final c in controls.where(
-                  (c) => c.type == MidiControlType.fader &&
-                      !c.id.startsWith('layer-vol-'),
-                ))
-                  _faderTile(context, ref, c, controlsCtrl, connected),
-              ],
-            ),
-            _Section(
-              title: 'XY Pad',
-              children: [
-                for (final c in controls.where(
-                  (c) => c.type == MidiControlType.xyPad,
-                ))
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 8,
-                    ),
-                    child: SizedBox(
-                      width: 340,
-                      child: XyPadControl(
-                        label: c.label,
-                        xValue: c.normalizedValue,
-                        yValue: c.yNormalized,
-                        enabled: connected,
-                        onChanged: (x, y) =>
-                            unawaited(controlsCtrl.setXY(c, x, y)),
+                if (!connected)
+                  Card(
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest
+                        .withValues(alpha: 0.5),
+                    child: ListTile(
+                      leading: Icon(
+                        Icons.link_off,
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                      title: const Text('No MIDI device connected'),
+                      subtitle: const Text(
+                        'Controls are disabled. Connect in Settings.',
                       ),
                     ),
                   ),
+                if (controls.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 48),
+                    child: Center(child: Text('This bank is empty.')),
+                  )
+                else ...[
+                  // Layer Volume Faders with On/Off toggles (Primary - Kontakt)
+                  _Section(
+                    title: 'Layer Volumes',
+                    horizontal: true,
+                    height: 252,
+                    children: [
+                      for (final c in controls.where(
+                        (c) => c.id.startsWith('layer-vol-'),
+                      ))
+                        _layerTile(context, ref, c, controls, controlsCtrl, connected),
+                    ],
+                  ),
+                  // Continuous Pads — assignable CC toggles for the Kontakt
+                  // library's pad/drone controls (chromatic C-B labels).
+                  if (padControls.isNotEmpty) ...[
+                    _Section(
+                      title: 'Continuous Pads',
+                      children: [_padGrid(padControls, controlsCtrl, connected)],
+                    ),
+                    if (padVolumeControl != null)
+                      _Section(
+                        title: 'Pad Volume',
+                        horizontal: true,
+                        height: 180,
+                        children: [
+                          _faderTile(
+                            context,
+                            ref,
+                            padVolumeControl,
+                            controlsCtrl,
+                            connected,
+                          ),
+                        ],
+                      ),
+                  ],
+                  // Drum Pads — momentary pads assignable to drum articulations
+                  if (drumControls.isNotEmpty)
+                    _Section(
+                      title: 'Drum Pads',
+                      children: [
+                        _drumGrid(drumControls, controlsCtrl, connected),
+                      ],
+                    ),
+                  // Performance Controls Section (Knobs, Modulation, etc.)
+                  _Section(
+                    title: state.activeBank?.name ?? 'Performance',
+                    horizontal: true,
+                    children: [
+                      for (final c in controls.where(
+                        (c) => c.type == MidiControlType.knob &&
+                            !c.id.startsWith('part-pan-') &&
+                            !c.id.startsWith('mix-pan-'),
+                      ))
+                        _knobTile(context, ref, c, controlsCtrl, connected),
+                    ],
+                  ),
+                  // Channel Volume Faders (Part volumes)
+                  _Section(
+                    title: 'Channel Volumes',
+                    horizontal: true,
+                    children: [
+                      for (final c in controls.where(
+                        (c) => c.type == MidiControlType.fader &&
+                            !c.id.startsWith('layer-vol-'),
+                      ))
+                        _faderTile(context, ref, c, controlsCtrl, connected),
+                    ],
+                  ),
+                  _Section(
+                    title: 'XY Pad',
+                    children: [
+                      for (final c in controls.where(
+                        (c) => c.type == MidiControlType.xyPad,
+                      ))
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 8,
+                          ),
+                          child: SizedBox(
+                            width: 340,
+                            child: XyPadControl(
+                              label: c.label,
+                              xValue: c.normalizedValue,
+                              yValue: c.yNormalized,
+                              enabled: connected,
+                              onChanged: (x, y) =>
+                                  unawaited(controlsCtrl.setXY(c, x, y)),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  _Section(
+                    title: 'Buttons',
+                    children: [
+                      for (final c in controls.where(
+                        (c) =>
+                            c.type != MidiControlType.fader &&
+                            c.type != MidiControlType.knob &&
+                            c.type != MidiControlType.xyPad &&
+                            !c.id.startsWith('layer-toggle-') &&
+                            !c.id.startsWith('pad-') &&
+                            !c.id.startsWith('drum-'),
+                      ))
+                        _buttonTile(context, ref, c, controlsCtrl, connected),
+                    ],
+                  ),
+                ],
               ],
             ),
-            _Section(
-              title: 'Buttons',
-              children: [
-                for (final c in controls.where(
-                  (c) =>
-                      c.type != MidiControlType.fader &&
-                      c.type != MidiControlType.knob &&
-                      c.type != MidiControlType.xyPad &&
-                      !c.id.startsWith('layer-toggle-') &&
-                      !c.id.startsWith('pad-') &&
-                      !c.id.startsWith('drum-'),
-                ))
-                  _buttonTile(context, ref, c, controlsCtrl, connected),
-              ],
-            ),
-          ],
+          ),
         ],
       ),
     );
