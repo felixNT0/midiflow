@@ -1,0 +1,25 @@
+# Persistent AI IDE Rules — MIDIFlow
+
+- Read relevant `/docs` before coding.
+- MIDIFlow is a controller, not a DAW, synth, sampler or audio player.
+- Keep MVP focused on faders, knobs, buttons, XY, MIDI Learn guidance and profiles.
+- Play is the primary screen.
+- Use Flutter/Dart and isolate native MIDI behind adapters.
+- Verify package APIs from current docs/source; never invent methods.
+- Never assume all platforms/transports have identical support.
+- Never claim Kontakt assignment is complete merely because a CC was sent.
+- Do not claim every third-party library exposes every parameter.
+- No fake MIDI in production. Mocks are for tests or clearly labelled demo mode only.
+- Do not report connected until the real port is open.
+- Validate/clamp all MIDI values and channels.
+- Never leave Note On stuck; send Note Off on release/cancel.
+- Do not block UI with MIDI processing.
+- Dispose listeners, ports and native resources.
+- Handle permissions, hotplug, lifecycle, reconnect and errors.
+- Do not swallow exceptions silently or leave visible buttons inert.
+- Add tests with each feature.
+- Keep dependencies minimal and justify additions.
+- Design for phone, tablet and desktop; use large targets and readable labels.
+- At session start: inspect git status, architecture, docs and milestone.
+- Before finishing: format, analyze, test, build where possible; report exact changes and unverified platform behavior.
+- Do not rewrite working code without reason or mark a phase complete just because files were generated.

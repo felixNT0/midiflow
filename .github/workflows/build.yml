@@ -1,0 +1,90 @@
+name: Build installers
+
+# Builds release installers for every platform on demand.
+# Trigger: push a tag like v1.0.0, or run manually from the Actions tab.
+# Artifacts appear under the workflow run's "Artifacts" section.
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.7'
+          channel: stable
+      - run: flutter pub get
+      - run: flutter build apk --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: midiflow-android-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.7'
+          channel: stable
+      - run: flutter pub get
+      - run: flutter build windows --release
+      - name: Package
+        shell: pwsh
+        run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath midiflow-windows.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: midiflow-windows-zip
+          path: midiflow-windows.zip
+
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.7'
+          channel: stable
+      - run: flutter pub get
+      - run: flutter build linux --release
+      - run: tar -czf midiflow-linux.tar.gz -C build/linux/x64/release/bundle .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: midiflow-linux-tarball
+          path: midiflow-linux.tar.gz
+
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.7'
+          channel: stable
+      - run: flutter pub get
+      - run: flutter build macos --release
+      - name: Package
+        run: |
+          cd build/macos/Build/Products/Release
+          zip -qry -y "$GITHUB_WORKSPACE/midiflow-macos.zip" midiflow.app
+      - uses: actions/upload-artifact@v4
+        with:
+          name: midiflow-macos-zip
+          path: midiflow-macos.zip
+
+  # iOS requires signing certificates — configure APP_STORE_CONNECT_* /
+  # certificate secrets, then uncomment this job.
+  # ios:
+  #   runs-on: macos-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: subosito/flutter-action@v2
+  #       with: { flutter-version: '3.47.7', channel: stable }
+  #     - run: flutter pub get
+  #     - run: flutter build ipa --release --export-options-plist=ios/ExportOptions.plist

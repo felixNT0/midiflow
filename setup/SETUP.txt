@@ -1,0 +1,107 @@
+================================================================
+MIDIFlow — Setup Guide
+================================================================
+
+MIDIFlow turns your phone/tablet into a remote MIDI controller for
+FL Studio and Logic Pro (and any MIDI-compatible app) running on your
+laptop.
+
+WHAT YOU NEED
+-------------
+  • Laptop:   macOS (works now) or Windows (needs loopMIDI — see below)
+  • Phone:    Android or iPhone, on the SAME Wi-Fi network as the laptop
+  • Apps:     MIDIFlow on the laptop AND on the phone
+              (see app-installers/ folder for each platform)
+
+
+STEP 1 — INSTALL THE APPS
+-------------------------
+  LINUX/macOS bridge host (the laptop that runs your DAW):
+    macos/  → unzip MIDIFlow-macOS.zip, drag MIDIFlow.app to
+              Applications. If macOS blocks it ("unidentified developer"),
+              right-click → Open, or run:
+                xattr -cr "/Applications/MIDIFlow.app"
+
+  Phone:
+    android/ → copy MIDIFlow.apk to the phone and tap to install
+               (allow "install unknown apps" if Android asks).
+    ios/     → build/install via TestFlight or Xcode (not included —
+               iOS builds need an Apple signing certificate).
+
+  Windows/Linux: no installer could be produced on this Mac — build
+  with `flutter build windows` / `flutter build linux` on those OSes.
+  Windows also needs loopMIDI (https://www.tobias-erichsen.de/loopmidi.html)
+  or Windows MIDI Services so the virtual "MIDIFlow Bridge" port exists.
+
+
+STEP 2 — CONNECT PHONE TO LAPTOP (one time)
+-------------------------------------------
+  1. On the laptop, open MIDIFlow — it shows the Desktop Bridge screen.
+     The bridge starts automatically; note the TOKEN and ADDRESS shown.
+  2. On the phone, open MIDIFlow → Settings → Connect to computer.
+  3. Enter the laptop address and token, tap Connect.
+  4. Both devices must be on the same Wi-Fi network.
+
+  The laptop now exposes a virtual MIDI device named "MIDIFlow Bridge".
+
+
+STEP 3A — FL STUDIO SETUP (one time)
+------------------------------------
+  1. Install the controller script:
+       • Copy flstudio/device_midiflow.py into FL Studio's user data
+         folder:  Settings/Hardware/MIDIFlow/
+         (create the MIDIFlow folder if it doesn't exist — the full
+         path is typically
+         ~/Documents/Image-Line/FL Studio/Settings/Hardware/MIDIFlow/
+         but check FL's own data-folder setting if customized)
+       • Fully quit and reopen FL Studio.
+  2. Options → MIDI Settings:
+       • Input  = "MIDIFlow Bridge"
+       • Controller type = "MIDIFlow"
+  3. Transport (play/stop/record), mixer faders and channel-rack
+     volume/pan work automatically — no more setup needed.
+  4. For Kontakt / VST instruments:
+       • Open the plugin wrapper settings → MIDI tab →
+         set Input port = 10
+       • In Kontakt, right-click a control → "Learn MIDI CC" and move
+         the matching MIDIFlow control.
+
+  CC MAP (all on MIDI channel 1, or the selected Part channel):
+    Layer volumes      CC20–CC27   (faders under each layer)
+    Layer on/off       CC28–CC35   (On/Off button under each fader)
+    Continuous pads    CC36–CC47   (Instrument tab, C–B pads)
+    Drum pads          CC48–CC63   (Drums tab, Pad 1–16)
+    Effects knobs      CC96–CC103  (Effects tab)
+    Effects on/off     CC104–CC107 (Effects tab)
+    Performance knobs  various     (Performance tab)
+
+
+STEP 3B — LOGIC PRO SETUP
+-------------------------
+  1. No script needed — "MIDIFlow Bridge" shows up as a normal MIDI
+     input automatically.
+  2. Logic Pro → Settings → MIDI → enable "MIDIFlow Bridge" as an
+     input device.
+  3. Create a Software Instrument track with Kontakt — it receives
+     MIDI directly.
+  4. Kontakt Learn works with no extra setup: right-click a control →
+     Learn MIDI CC → move the MIDIFlow control.
+  5. Transport/mixer are NOT scriptable in Logic — assign them once in
+     Logic's Controller Assignments (Environment → Controller
+     Environment, learn mode) using these CCs:
+       ch16 CC30 = play/pause, CC31 = stop, CC32 = record, CC14 = master
+
+
+TROUBLESHOOTING
+---------------
+  • No sound/controls: check the phone shows "Bridge" connected in the
+    top-right chip, and that the laptop bridge screen lists the phone
+    under "Connected controllers".
+  • Controls reach FL Studio but not Kontakt: confirm the plugin MIDI
+    Input port is set to 10 (FL Studio only — Logic needs nothing).
+  • Layer faders/pads not learned in Kontakt: make sure you right-
+    clicked the actual layer/pad control and kept Learn open while
+    moving the fader.
+  • App updates: rebuild with `flutter build apk --release` /
+    `flutter build macos --release` and replace the files here.
+================================================================
