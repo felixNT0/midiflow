@@ -21,6 +21,8 @@ STEP 1 — INSTALL THE APPS
               Applications. If macOS blocks it ("unidentified developer"),
               right-click → Open, or run:
                 xattr -cr "/Applications/MIDIFlow.app"
+              The first launch may prompt for firewall/network permission —
+              allow it so the bridge can bind to its TCP port.
 
   Phone:
     android/ → copy MIDIFlow.apk to the phone and tap to install
