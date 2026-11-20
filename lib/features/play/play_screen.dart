@@ -10,6 +10,7 @@ import '../../domain/midi/midi_control.dart';
 import '../../infrastructure/midi/network/bridge_client.dart';
 import '../../shared/controls/button_control.dart';
 import '../../shared/controls/fader_control.dart';
+import '../../shared/controls/horizontal_fader_control.dart';
 import '../../shared/controls/knob_control.dart';
 import '../../shared/controls/xy_pad_control.dart';
 import '../../shared/theme/app_theme.dart';
@@ -122,15 +123,19 @@ class PlayScreen extends ConsumerWidget {
                       if (padVolumeControl != null)
                         _Section(
                           title: 'Pad Volume',
-                          horizontal: true,
-                          height: 180,
+                          height: 120,
                           children: [
-                            _faderTile(
-                              context,
-                              ref,
-                              padVolumeControl,
-                              controlsCtrl,
-                              connected,
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 24),
+                              child: HorizontalFaderControl(
+                                label: padVolumeControl.label,
+                                value: padVolumeControl.normalizedValue,
+                                midiValue: padVolumeControl.currentMidiValue,
+                                enabled: connected,
+                                onChanged: (v) => unawaited(
+                                  controlsCtrl.setNormalized(padVolumeControl, v),
+                                ),
+                              ),
                             ),
                           ],
                         ),
