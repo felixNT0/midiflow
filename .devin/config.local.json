@@ -58,7 +58,12 @@
       "Exec(system_profiler)",
       "Exec(zip)",
       "Exec(unzip)",
-      "Exec(xcodebuild)"
+      "Exec(xcodebuild)",
+      "Exec(git remote)",
+      "Exec(git check-ignore)",
+      "Exec(git ls-files)",
+      "Exec(git log)",
+      "Exec(git diff)"
     ]
   }
 }
