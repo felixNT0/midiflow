@@ -40,48 +40,44 @@ class PlayScreen extends ConsumerWidget {
         .firstOrNull;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('MIDIFlow'),
-        toolbarHeight: 48, // Reduced header height
-        actions: [
-          _ConnectionChip(
-            connected: connected,
-            hasError:
-                bridge.status == BridgeClientStatus.error ||
-                bridge.lastError != null,
-            deviceName: bridge.isConnected
-                ? 'Bridge'
-                : midi.selectedDevice?.name,
-            onTap: onOpenSettings,
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
       body: Column(
         children: [
-          // Sticky header: bank tabs + channel selector stay fixed while scrolling
-          Padding(
+          // Sticky header: bank tabs + connection chip stay fixed while scrolling
+          Container(
+            color: Theme.of(context).colorScheme.surface,
             padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-            child: Column(
+            child: Row(
               children: [
-                _BankBar(state: state),
-                if (state.activeBank?.id == 'bank-instrument' ||
-                    state.activeBank?.id == 'bank-performance') ...[
-                  const SizedBox(height: 6),
-                  _LeadChannelBar(
-                    leadChannel: controlsCtrl.leadChannel,
-                    onSelect: controlsCtrl.setLeadChannel,
-                  ),
-                ],
-                const SizedBox(height: 6),
+                Expanded(child: _BankBar(state: state)),
+                const SizedBox(width: 8),
+                _ConnectionChip(
+                  connected: connected,
+                  hasError:
+                      bridge.status == BridgeClientStatus.error ||
+                      bridge.lastError != null,
+                  deviceName: bridge.isConnected
+                      ? 'Bridge'
+                      : midi.selectedDevice?.name,
+                  onTap: onOpenSettings,
+                ),
               ],
             ),
           ),
+          const SizedBox(height: 6),
           // Scrollable content area
           Expanded(
             child: ListView(
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 20),
               children: [
+                // Channel selector — scrolls with content, not sticky
+                if (state.activeBank?.id == 'bank-instrument' ||
+                    state.activeBank?.id == 'bank-performance') ...[
+                  _LeadChannelBar(
+                    leadChannel: controlsCtrl.leadChannel,
+                    onSelect: controlsCtrl.setLeadChannel,
+                  ),
+                  const SizedBox(height: 6),
+                ],
                 if (!connected)
                   Card(
                     color: Theme.of(context).colorScheme.surfaceContainerHighest
@@ -120,20 +116,34 @@ class PlayScreen extends ConsumerWidget {
                   if (padControls.isNotEmpty) ...[
                     _Section(
                       title: 'Continuous Pads',
-                      children: [_padGrid(padControls, controlsCtrl, connected)],
+                      children: [_padGrid(context, padControls, controlsCtrl, connected)],
                     ),
                     if (padVolumeControl != null)
                       _Section(
                         title: 'Pad Volume',
-                        horizontal: true,
-                        height: 180,
+                        height: 200,
                         children: [
-                          _faderTile(
-                            context,
-                            ref,
-                            padVolumeControl,
-                            controlsCtrl,
-                            connected,
+                          Center(
+                            child: SizedBox(
+                              width: 80,
+                              height: 160,
+                              child: GestureDetector(
+                                onLongPress: () => _showRenameDialog(
+                                  context,
+                                  padVolumeControl,
+                                  controlsCtrl,
+                                ),
+                                child: FaderControl(
+                                  label: padVolumeControl.label,
+                                  value: padVolumeControl.normalizedValue,
+                                  midiValue: padVolumeControl.currentMidiValue,
+                                  enabled: connected,
+                                  onChanged: (v) => unawaited(
+                                    controlsCtrl.setNormalized(padVolumeControl, v),
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
                         ],
                       ),
@@ -143,7 +153,7 @@ class PlayScreen extends ConsumerWidget {
                     _Section(
                       title: 'Drum Pads',
                       children: [
-                        _drumGrid(drumControls, controlsCtrl, connected),
+                        _drumGrid(context, drumControls, controlsCtrl, connected),
                       ],
                     ),
                   // Performance Controls Section (Knobs, Modulation, etc.)
@@ -220,8 +230,48 @@ class PlayScreen extends ConsumerWidget {
     );
   }
 
+  /// Shows a dialog to rename a control label.
+  void _showRenameDialog(
+    BuildContext context,
+    MidiControl control,
+    ControlsController ctrl,
+  ) {
+    final controller = TextEditingController(text: control.label);
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Rename Control'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            labelText: 'New name',
+            hintText: 'e.g., Piano, Pad 1, Reverb',
+          ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              final newLabel = controller.text.trim();
+              if (newLabel.isNotEmpty) {
+                ctrl.updateControlLabel(control.id, newLabel);
+              }
+              Navigator.of(context).pop();
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
   /// 2×6 grid of continuous-pad toggles (CC pads for Kontakt assign).
   Widget _padGrid(
+    BuildContext context,
     List<MidiControl> pads,
     ControlsController ctrl,
     bool connected,
@@ -235,11 +285,18 @@ class PlayScreen extends ConsumerWidget {
               for (var col = 0; col < 6; col++) ...[
                 if (col > 0) const SizedBox(width: 10),
                 Expanded(
-                  child: _PadTile(
-                    control: pads[row * 6 + col],
-                    enabled: connected,
-                    onToggle: () =>
-                        unawaited(ctrl.buttonToggle(pads[row * 6 + col])),
+                  child: GestureDetector(
+                    onLongPress: () => _showRenameDialog(
+                      context,
+                      pads[row * 6 + col],
+                      ctrl,
+                    ),
+                    child: _PadTile(
+                      control: pads[row * 6 + col],
+                      enabled: connected,
+                      onToggle: () =>
+                          unawaited(ctrl.buttonToggle(pads[row * 6 + col])),
+                    ),
                   ),
                 ),
               ],
@@ -252,6 +309,7 @@ class PlayScreen extends ConsumerWidget {
 
   /// 4×4 grid of momentary drum pads.
   Widget _drumGrid(
+    BuildContext context,
     List<MidiControl> drums,
     ControlsController ctrl,
     bool connected,
@@ -265,13 +323,20 @@ class PlayScreen extends ConsumerWidget {
               for (var col = 0; col < 4; col++) ...[
                 if (col > 0) const SizedBox(width: 10),
                 Expanded(
-                  child: _DrumPad(
-                    label: drums[row * 4 + col].label,
-                    enabled: connected,
-                    onPress: () =>
-                        unawaited(ctrl.buttonPress(drums[row * 4 + col])),
-                    onRelease: () =>
-                        unawaited(ctrl.buttonRelease(drums[row * 4 + col])),
+                  child: GestureDetector(
+                    onLongPress: () => _showRenameDialog(
+                      context,
+                      drums[row * 4 + col],
+                      ctrl,
+                    ),
+                    child: _DrumPad(
+                      label: drums[row * 4 + col].label,
+                      enabled: connected,
+                      onPress: () =>
+                          unawaited(ctrl.buttonPress(drums[row * 4 + col])),
+                      onRelease: () =>
+                          unawaited(ctrl.buttonRelease(drums[row * 4 + col])),
+                    ),
                   ),
                 ),
               ],
@@ -289,17 +354,20 @@ class PlayScreen extends ConsumerWidget {
     ControlsController ctrl,
     bool connected,
   ) {
-    return SizedBox(
-      width: 76,
-      height: 210,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: FaderControl(
-          label: c.label,
-          value: c.normalizedValue,
-          midiValue: c.currentMidiValue,
-          enabled: connected,
-          onChanged: (v) => unawaited(ctrl.setNormalized(c, v)),
+    return GestureDetector(
+      onLongPress: () => _showRenameDialog(context, c, ctrl),
+      child: SizedBox(
+        width: 76,
+        height: 210,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: FaderControl(
+            label: c.label,
+            value: c.normalizedValue,
+            midiValue: c.currentMidiValue,
+            enabled: connected,
+            onChanged: (v) => unawaited(ctrl.setNormalized(c, v)),
+          ),
         ),
       ),
     );
@@ -323,38 +391,41 @@ class PlayScreen extends ConsumerWidget {
         break;
       }
     }
-    return SizedBox(
-      width: 76,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: Column(
-          children: [
-            SizedBox(
-              height: 192,
-              child: FaderControl(
-                label: fader.label,
-                value: fader.normalizedValue,
-                midiValue: fader.currentMidiValue,
-                enabled: connected,
-                onChanged: (v) => unawaited(ctrl.setNormalized(fader, v)),
+    return GestureDetector(
+      onLongPress: () => _showRenameDialog(context, fader, ctrl),
+      child: SizedBox(
+        width: 76,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: Column(
+            children: [
+              SizedBox(
+                height: 192,
+                child: FaderControl(
+                  label: fader.label,
+                  value: fader.normalizedValue,
+                  midiValue: fader.currentMidiValue,
+                  enabled: connected,
+                  onChanged: (v) => unawaited(ctrl.setNormalized(fader, v)),
+                ),
               ),
-            ),
-            const SizedBox(height: 4),
-            SizedBox(
-              height: 46,
-              width: double.infinity,
-              child: toggle == null
-                  ? const SizedBox.shrink()
-                  : ButtonControl(
-                      label: 'On/Off',
-                      mode: ButtonMode.toggle,
-                      active: toggle.normalizedValue >= 0.5,
-                      enabled: connected,
-                      onToggle: () =>
-                          unawaited(ctrl.buttonToggle(toggle!)),
-                    ),
-            ),
-          ],
+              const SizedBox(height: 4),
+              SizedBox(
+                height: 46,
+                width: double.infinity,
+                child: toggle == null
+                    ? const SizedBox.shrink()
+                    : ButtonControl(
+                        label: 'On/Off',
+                        mode: ButtonMode.toggle,
+                        active: toggle.normalizedValue >= 0.5,
+                        enabled: connected,
+                        onToggle: () =>
+                            unawaited(ctrl.buttonToggle(toggle!)),
+                      ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -367,16 +438,19 @@ class PlayScreen extends ConsumerWidget {
     ControlsController ctrl,
     bool connected,
   ) {
-    return SizedBox(
-      width: 92,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: KnobControl(
-          label: c.label,
-          value: c.normalizedValue,
-          midiValue: c.currentMidiValue,
-          enabled: connected,
-          onChanged: (v) => unawaited(ctrl.setNormalized(c, v)),
+    return GestureDetector(
+      onLongPress: () => _showRenameDialog(context, c, ctrl),
+      child: SizedBox(
+        width: 92,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: KnobControl(
+            label: c.label,
+            value: c.normalizedValue,
+            midiValue: c.currentMidiValue,
+            enabled: connected,
+            onChanged: (v) => unawaited(ctrl.setNormalized(c, v)),
+          ),
         ),
       ),
     );
@@ -395,18 +469,21 @@ class PlayScreen extends ConsumerWidget {
       MidiControlType.latchButton => ButtonMode.latch,
       _ => ButtonMode.momentary,
     };
-    return SizedBox(
-      width: 160,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: ButtonControl(
-          label: c.label,
-          mode: mode,
-          active: c.normalizedValue >= 0.5,
-          enabled: connected,
-          onPress: () => unawaited(ctrl.buttonPress(c)),
-          onRelease: () => unawaited(ctrl.buttonRelease(c)),
-          onToggle: () => unawaited(ctrl.buttonToggle(c)),
+    return GestureDetector(
+      onLongPress: () => _showRenameDialog(context, c, ctrl),
+      child: SizedBox(
+        width: 160,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: ButtonControl(
+            label: c.label,
+            mode: mode,
+            active: c.normalizedValue >= 0.5,
+            enabled: connected,
+            onPress: () => unawaited(ctrl.buttonPress(c)),
+            onRelease: () => unawaited(ctrl.buttonRelease(c)),
+            onToggle: () => unawaited(ctrl.buttonToggle(c)),
+          ),
         ),
       ),
     );
@@ -656,14 +733,29 @@ class _DrumPadState extends State<_DrumPad> {
               width: _pressed ? 2 : 1,
             ),
           ),
-          child: Center(
-            child: Text(
-              widget.label,
-              style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: _pressed ? scheme.primary : scheme.onSurface,
+          child: Stack(
+            children: [
+              Center(
+                child: Text(
+                  widget.label,
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: _pressed ? scheme.primary : scheme.onSurface,
+                      ),
+                ),
+              ),
+              // Small edit icon in corner to indicate rename capability
+              if (!_pressed)
+                Positioned(
+                  top: 4,
+                  right: 4,
+                  child: Icon(
+                    Icons.edit,
+                    size: 12,
+                    color: scheme.onSurfaceVariant.withValues(alpha: 0.5),
                   ),
-            ),
+                ),
+            ],
           ),
         ),
       ),
@@ -716,14 +808,28 @@ class _PadTile extends StatelessWidget {
                     ]
                   : null,
             ),
-            child: Center(
-              child: Text(
-                control.label,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      color: active ? scheme.primary : scheme.onSurface,
-                    ),
-              ),
+            child: Stack(
+              children: [
+                Center(
+                  child: Text(
+                    control.label,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: active ? scheme.primary : scheme.onSurface,
+                        ),
+                  ),
+                ),
+                // Small edit icon in corner to indicate rename capability
+                Positioned(
+                  top: 4,
+                  right: 4,
+                  child: Icon(
+                    Icons.edit,
+                    size: 12,
+                    color: scheme.onSurfaceVariant.withValues(alpha: 0.5),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
