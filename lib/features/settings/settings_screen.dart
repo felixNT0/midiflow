@@ -12,6 +12,7 @@ import '../../infrastructure/midi/midi_service.dart';
 import '../../infrastructure/midi/network/bridge_client.dart';
 import '../../infrastructure/midi/network/bridge_protocol.dart';
 import '../assign/assign_screen.dart';
+import '../ble/ble_midi_screen.dart';
 import '../bridge/bridge_screen.dart';
 import '../diagnostics/midi_activity_monitor.dart';
 import '../diagnostics/midi_diagnostics_screen.dart';
@@ -102,7 +103,13 @@ class SettingsScreen extends ConsumerWidget {
                 ListTile(
                   leading: const Icon(Icons.bluetooth),
                   title: const Text('BLE MIDI'),
-                  subtitle: const Text('Enabled (flutter_midi_command_ble)'),
+                  subtitle: const Text('Connect via Bluetooth LE'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const BleMidiScreen(),
+                    ),
+                  ),
                 ),
               ],
             ),
