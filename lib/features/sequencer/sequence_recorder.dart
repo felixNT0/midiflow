@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/midi/controls_provider.dart';
 import '../../application/sequencer/sequence_service.dart';
-import '../../domain/midi/midi_control.dart';
 
 /// UI for recording and playing back control sequences.
 /// Uses the sequence_service for data management.
@@ -132,9 +131,7 @@ class SequenceRecorder extends ConsumerWidget {
     if (sequence == null) return;
 
     // Mark as playing
-    ref.read(sequenceServiceProvider.notifier).state = ref
-        .read(sequenceServiceProvider)
-        .copyWith(isPlaying: true);
+    service.setPlaying(true);
 
     final controlsCtrl = ref.read(controlsProvider.notifier);
     final controlsState = ref.read(controlsProvider);
@@ -164,8 +161,6 @@ class SequenceRecorder extends ConsumerWidget {
     }
 
     // Mark as not playing
-    ref.read(sequenceServiceProvider.notifier).state = ref
-        .read(sequenceServiceProvider)
-        .copyWith(isPlaying: false);
+    service.setPlaying(false);
   }
 }

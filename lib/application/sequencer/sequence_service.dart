@@ -206,6 +206,11 @@ class SequenceService extends Notifier<SequenceState> {
     state = state.copyWith(isPlaying: false);
   }
 
+  /// Sets playback state.
+  void setPlaying(bool playing) {
+    state = state.copyWith(isPlaying: playing);
+  }
+
   /// Gets a sequence by ID.
   RecordedSequence? getSequence(String id) {
     try {

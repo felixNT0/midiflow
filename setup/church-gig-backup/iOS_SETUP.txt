@@ -156,19 +156,27 @@ IF YOU NEED iPHONE SUPPORT NOW:
                     BUILD COMMANDS REFERENCE
 ═══════════════════════════════════════════════════════════════════════════════
 
-Build iOS app:
+QUICK BUILD (Recommended):
+  ./setup/build_ios.sh
+  └─ Automated script that handles everything
+
+MANUAL BUILD:
   cd /Users/user/Projects/midiflow
-  flutter build ios --release
-
-Build iOS simulator (for testing):
-  flutter build ios --simulator
-
-Open in Xcode:
-  open ios/Runner.xcworkspace
-
-Clean build (if errors):
   flutter clean
   flutter pub get
+  cd ios && pod install && cd ..
+  flutter build ios --release
+
+OPEN IN XCODE:
+  open ios/Runner.xcworkspace
+
+BUILD IPA (for distribution):
+  flutter build ipa --release --export-options-plist=ios/ExportOptions.plist
+
+CLEAN BUILD (if errors):
+  flutter clean
+  flutter pub get
+  cd ios && pod install && cd ..
   flutter build ios --release
 
 ═══════════════════════════════════════════════════════════════════════════════
