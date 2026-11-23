@@ -2,6 +2,45 @@
 
 This document outlines planned features for future development of MIDIFlow.
 
+## ✅ Completed Features (v1.0.0)
+
+### Core Functionality
+- ✅ **Wi-Fi Bridge** — TCP bridge for phone-to-computer connection
+- ✅ **BLE MIDI** — Bluetooth LE MIDI peripheral mode
+- ✅ **USB MIDI** — Direct USB connection support
+- ✅ **Connection Modes** — Wi-Fi, BLE, USB with mode selector
+- ✅ **Independent Bridges** — Wi-Fi and BLE work separately
+- ✅ **Automatic Reconnection** — Handles BLE/USB disconnections
+- ✅ **Tabbed Settings** — Organized into 4 tabs (General, Connections, Controls, Tools)
+
+### MIDI Controls
+- ✅ **Layer Volumes** — 8 faders (CC20-27) for Kontakt layers
+- ✅ **Layer Toggles** — 8 on/off buttons (CC28-35)
+- ✅ **Continuous Pads** — 12 assignable pads (CC36-47)
+- ✅ **Pad Volume** — Master volume (CC48)
+- ✅ **Drum Pads** — Momentary triggers (CC48-63)
+- ✅ **Performance Knobs** — Continuous CC controls
+- ✅ **XY Pad** — 2D control surface
+- ✅ **Transport Controls** — Play, pause, stop, record
+- ✅ **Mixer Controls** — Channel volumes and pans
+- ✅ **Effects Controls** — Send levels and returns
+
+### Configuration & Management
+- ✅ **Assign Controls** — Edit MIDI mappings, CC numbers, channels
+- ✅ **Profiles** — Save/load control layouts
+- ✅ **Control Labels** — Rename faders, knobs, buttons
+- ✅ **Sequence Recorder** — Record control movements
+- ✅ **MIDI Diagnostics** — Device monitoring and testing
+- ✅ **MIDI Activity Monitor** — Real-time message monitoring
+- ✅ **In-App Guide** — Professional markdown documentation
+
+### Technical
+- ✅ **Centralized Logging** — AppLogger for debugging
+- ✅ **API Documentation** — Comprehensive docs/API.md
+- ✅ **Optimized APK** — 19MB (was 53MB)
+- ✅ **Cross-Platform** — Android, iOS, macOS, Windows, Linux
+- ✅ **53 Tests** — Comprehensive test coverage
+
 ## 🎯 High Priority (Recommended for Church Gigs)
 
 ### 1. Setlist/Song Management
@@ -19,6 +58,7 @@ This document outlines planned features for future development of MIDIFlow.
   - Persist setlists to SharedPreferences
 - **Effort**: Medium
 - **Priority**: ⭐⭐⭐
+- **Status**: 📋 Planned
 
 ### 2. Macro Controls
 - **Description**: Combine multiple CCs into single "macro" controls
@@ -34,6 +74,7 @@ This document outlines planned features for future development of MIDIFlow.
   - Send multiple CCs per macro movement
 - **Effort**: Medium
 - **Priority**: ⭐⭐⭐
+- **Status**: 📋 Planned
 
 ### 3. Performance Modes
 - **Description**: Different UI layouts for different performance types
@@ -49,6 +90,7 @@ This document outlines planned features for future development of MIDIFlow.
   - Persist mode selection
 - **Effort**: Medium
 - **Priority**: ⭐⭐
+- **Status**: 📋 Planned
 
 ### 4. Gesture Controls
 - **Description**: Swipe gestures for common actions
@@ -64,6 +106,7 @@ This document outlines planned features for future development of MIDIFlow.
   - Persist gesture preferences
 - **Effort**: Low-Medium
 - **Priority**: ⭐⭐
+- **Status**: 📋 Planned
 
 ## 🚀 Medium Priority (Nice to Have)
 
@@ -81,6 +124,7 @@ This document outlines planned features for future development of MIDIFlow.
   - Requires MIDI clock support in DAW
 - **Effort**: High
 - **Priority**: ⭐
+- **Status**: 🔮 Future
 
 ### 6. Multi-Device Support
 - **Description**: Control multiple MIDI devices simultaneously
@@ -96,6 +140,7 @@ This document outlines planned features for future development of MIDIFlow.
   - Complex routing logic
 - **Effort**: Medium
 - **Priority**: ⭐
+- **Status**: 🔮 Future
 
 ### 7. Backup/Sync
 - **Description**: Cloud backup of profiles and settings
@@ -111,6 +156,7 @@ This document outlines planned features for future development of MIDIFlow.
   - Privacy considerations
 - **Effort**: Medium
 - **Priority**: ⭐
+- **Status**: 🔮 Future
 
 ### 8. Enhanced Haptic Feedback
 - **Description**: Improved tactile feedback for controls
@@ -126,6 +172,7 @@ This document outlines planned features for future development of MIDIFlow.
   - Platform-specific haptic APIs
 - **Effort**: Low
 - **Priority**: ⭐⭐
+- **Status**: 🔮 Future
 
 ## 💡 Future Ideas (Long-term Research)
 
@@ -143,6 +190,7 @@ This document outlines planned features for future development of MIDIFlow.
   - User feedback loop
 - **Effort**: High
 - **Priority**: ⭐
+- **Status**: 🔬 Research
 
 ### 10. Remote Access
 - **Description**: Control from anywhere via internet
@@ -158,6 +206,7 @@ This document outlines planned features for future development of MIDIFlow.
   - Real-time communication (WebRTC, WebSocket)
 - **Effort**: High
 - **Priority**: ⭐
+- **Status**: 🔬 Research
 
 ### 11. Collaboration Features
 - **Description**: Share profiles and setlists with other users
@@ -173,6 +222,7 @@ This document outlines planned features for future development of MIDIFlow.
   - User accounts (if needed)
 - **Effort**: Medium
 - **Priority**: ⭐
+- **Status**: 🔮 Future
 
 ### 12. MIDI Recording/Playback
 - **Description**: Record performances for review and analysis
@@ -188,6 +238,7 @@ This document outlines planned features for future development of MIDIFlow.
   - Analysis tools (waveform, statistics)
 - **Effort**: Medium
 - **Priority**: ⭐⭐
+- **Status**: 🔮 Future
 
 ## 🔧 Technical Improvements
 
@@ -201,10 +252,11 @@ This document outlines planned features for future development of MIDIFlow.
 - **Implementation Notes**:
   - Profile app performance
   - Optimize asset loading
-  - Reduce APK size (currently ~53MB)
+  - Reduce APK size (currently ~19MB)
   - Consider app bundle format
 - **Effort**: Medium
 - **Priority**: ⭐⭐
+- **Status**: 🔄 Ongoing
 
 ### 14. Accessibility Improvements
 - **Description**: Better support for accessibility features
@@ -221,6 +273,7 @@ This document outlines planned features for future development of MIDIFlow.
   - Keyboard shortcuts
 - **Effort**: Medium
 - **Priority**: ⭐⭐
+- **Status**: 🔄 Ongoing
 
 ### 15. Plugin Architecture
 - **Description**: Allow third-party plugins for custom features
@@ -236,26 +289,27 @@ This document outlines planned features for future development of MIDIFlow.
   - Documentation for plugin developers
 - **Effort**: High
 - **Priority**: ⭐
+- **Status**: 🔬 Research
 
 ## 📊 Priority Matrix
 
 | Feature | Impact | Effort | Priority | Status |
 |---------|--------|--------|----------|--------|
-| Setlist Management | High | Medium | ⭐⭐⭐ | Planned |
-| Macro Controls | High | Medium | ⭐⭐⭐ | Planned |
-| Performance Modes | Medium | Medium | ⭐⭐ | Planned |
-| Gesture Controls | Medium | Low | ⭐⭐ | Planned |
-| MIDI Clock Sync | Medium | High | ⭐ | Future |
-| Multi-Device | Medium | Medium | ⭐ | Future |
-| Backup/Sync | Low | Medium | ⭐ | Future |
-| Enhanced Haptics | Low | Low | ⭐⭐ | Future |
-| AI Mapping | Low | High | ⭐ | Research |
-| Remote Access | Low | High | ⭐ | Research |
-| Collaboration | Low | Medium | ⭐ | Future |
-| MIDI Recording | Medium | Medium | ⭐⭐ | Future |
-| Performance | Medium | Medium | ⭐⭐ | Ongoing |
-| Accessibility | Medium | Medium | ⭐⭐ | Ongoing |
-| Plugin Architecture | Low | High | ⭐ | Research |
+| Setlist Management | High | Medium | ⭐⭐⭐ | 📋 Planned |
+| Macro Controls | High | Medium | ⭐⭐⭐ | 📋 Planned |
+| Performance Modes | Medium | Medium | ⭐⭐ | 📋 Planned |
+| Gesture Controls | Medium | Low | ⭐⭐ | 📋 Planned |
+| MIDI Clock Sync | Medium | High | ⭐ | 🔮 Future |
+| Multi-Device | Medium | Medium | ⭐ | 🔮 Future |
+| Backup/Sync | Low | Medium | ⭐ | 🔮 Future |
+| Enhanced Haptics | Low | Low | ⭐⭐ | 🔮 Future |
+| AI Mapping | Low | High | ⭐ | 🔬 Research |
+| Remote Access | Low | High | ⭐ | 🔬 Research |
+| Collaboration | Low | Medium | ⭐ | 🔮 Future |
+| MIDI Recording | Medium | Medium | ⭐⭐ | 🔮 Future |
+| Performance | Medium | Medium | ⭐⭐ | 🔄 Ongoing |
+| Accessibility | Medium | Medium | ⭐⭐ | 🔄 Ongoing |
+| Plugin Architecture | Low | High | ⭐ | 🔬 Research |
 
 ## 🎯 Recommended Implementation Order
 
@@ -282,5 +336,5 @@ This document outlines planned features for future development of MIDIFlow.
 ---
 
 **Last Updated:** November 23, 2026  
-**Status:** Planning phase  
+**Status:** v1.0.0 released, planning next features  
 **Next Review:** After church gig feedback
