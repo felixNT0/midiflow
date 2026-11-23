@@ -182,22 +182,11 @@ class MidiController extends Notifier<MidiState> {
   }
 
   /// Sets the connection mode and disconnects incompatible devices.
-  void setConnectionMode(ConnectionMode mode) {
+  Future<void> setConnectionMode(ConnectionMode mode) async {
     if (mode == state.connectionMode) return;
 
-    // Disconnect current device if it's not compatible with new mode
-    final currentDevice = state.selectedDevice;
-    if (currentDevice != null && currentDevice.isConnected) {
-      final isCompatible = switch (mode) {
-        ConnectionMode.wifi => currentDevice.kind == MidiDeviceKind.network,
-        ConnectionMode.ble => currentDevice.kind == MidiDeviceKind.ble,
-        ConnectionMode.usb => currentDevice.kind == MidiDeviceKind.usb,
-        ConnectionMode.auto => true,
-      };
-      if (!isCompatible) {
-        _service.disconnect(currentDevice);
-      }
-    }
+    // Disconnect all devices when switching modes to prevent interference
+    await _service.disconnectAll();
 
     state = state.copyWith(
       connectionMode: mode,

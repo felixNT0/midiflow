@@ -134,9 +134,23 @@ class MidiService {
 
   /// Connects to [device]. Completes only when a MIDI path is ready.
   ///
+  /// Disconnects all other devices first to prevent interference.
   /// Throws [MidiConnectionException] subclasses on failure.
   Future<void> connect(MidiDeviceInfo device) async {
     final target = _requirePluginDevice(device.id);
+
+    // Disconnect all other connected devices to prevent interference
+    for (final otherDevice in _devicesById.values) {
+      if (otherDevice.id != device.id && otherDevice.connected) {
+        try {
+          _midi.disconnectDevice(otherDevice);
+        } catch (e) {
+          // Ignore disconnect errors for other devices
+          debugPrint('Failed to disconnect ${otherDevice.name}: $e');
+        }
+      }
+    }
+
     try {
       await _midi.connectToDevice(target);
       // Refresh so the snapshot reflects the connected state and any ports
@@ -160,6 +174,20 @@ class MidiService {
       throw MidiServiceException('Unknown device: ${device.id}');
     }
     _midi.disconnectDevice(target);
+  }
+
+  /// Disconnects all connected devices.
+  Future<void> disconnectAll() async {
+    for (final device in _devicesById.values) {
+      if (device.connected) {
+        try {
+          _midi.disconnectDevice(device);
+        } catch (e) {
+          debugPrint('Failed to disconnect ${device.name}: $e');
+        }
+      }
+    }
+    await refreshDevices();
   }
 
   /// Sends a MIDI Control Change message to [device].
