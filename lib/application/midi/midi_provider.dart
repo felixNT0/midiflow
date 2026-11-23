@@ -107,6 +107,11 @@ class MidiController extends Notifier<MidiState> {
   late final MidiService _service;
   StreamSubscription<List<MidiDeviceInfo>>? _devicesSub;
   StreamSubscription<MidiIncomingMessage>? _messagesSub;
+  Timer? _reconnectTimer;
+  String? _lastConnectedDeviceId;
+  int _reconnectAttempts = 0;
+  static const int _maxReconnectAttempts = 5;
+  static const Duration _reconnectDelay = Duration(seconds: 2);
 
   /// Coalesces continuous CC streams (faders/knobs/XY drags) to at most one
   /// send per key per [_ccFlushInterval]; the latest value always wins and is
@@ -130,12 +135,16 @@ class MidiController extends Notifier<MidiState> {
     try {
       await _service.initialize();
       _devicesSub = _service.onDevicesChanged.listen((devices) {
+        final previousSelectedId = state.selectedDeviceId;
         state = state.copyWith(
           status: _service.status,
           devices: devices,
           error: _service.lastError,
           clearError: _service.lastError == null,
         );
+
+        // Check if selected device disconnected and attempt reconnection
+        _checkAndReconnect(devices, previousSelectedId);
       });
       _messagesSub = _service.onMessage.listen((message) {
         final log = [...state.messages, message];
@@ -159,8 +168,81 @@ class MidiController extends Notifier<MidiState> {
 
   Future<void> _dispose() async {
     _ccFlushTimer?.cancel();
+    _reconnectTimer?.cancel();
     await _devicesSub?.cancel();
     await _messagesSub?.cancel();
+  }
+
+  /// Checks if the selected device disconnected and attempts reconnection.
+  void _checkAndReconnect(List<MidiDeviceInfo> devices, String? previousSelectedId) {
+    if (previousSelectedId == null) return;
+
+    final device = devices.firstWhere(
+      (d) => d.id == previousSelectedId,
+      orElse: () => MidiDeviceInfo(
+        id: '',
+        name: '',
+        kind: MidiDeviceKind.unknown,
+        inputPorts: const [],
+        outputPorts: const [],
+        connectionState: MidiDeviceConnectionState.disconnected,
+      ),
+    );
+
+    // If device was connected and now disconnected, attempt reconnection
+    if (device.id.isNotEmpty &&
+        device.connectionState == MidiDeviceConnectionState.disconnected &&
+        _reconnectAttempts < _maxReconnectAttempts) {
+      _scheduleReconnect(device.id);
+    }
+  }
+
+  /// Schedules a reconnection attempt.
+  void _scheduleReconnect(String deviceId) {
+    _reconnectTimer?.cancel();
+    _reconnectAttempts++;
+
+    state = state.copyWith(
+      error: 'Reconnecting... (attempt $_reconnectAttempts/$_maxReconnectAttempts)',
+    );
+
+    _reconnectTimer = Timer(_reconnectDelay, () async {
+      final device = state.devices.firstWhere(
+        (d) => d.id == deviceId,
+        orElse: () => MidiDeviceInfo(
+          id: '',
+          name: '',
+          kind: MidiDeviceKind.unknown,
+          inputPorts: const [],
+          outputPorts: const [],
+          connectionState: MidiDeviceConnectionState.disconnected,
+        ),
+      );
+
+      if (device.id.isNotEmpty &&
+          device.connectionState == MidiDeviceConnectionState.disconnected) {
+        try {
+          await _service.connect(device);
+          _reconnectAttempts = 0;
+          state = state.copyWith(
+            selectedDeviceId: deviceId,
+            error: null,
+            clearError: true,
+          );
+        } catch (e) {
+          // Reconnection failed, will retry if attempts remain
+          if (_reconnectAttempts >= _maxReconnectAttempts) {
+            state = state.copyWith(
+              error: 'Failed to reconnect after $_maxReconnectAttempts attempts',
+              clearError: false,
+            );
+            _reconnectAttempts = 0;
+          } else {
+            _scheduleReconnect(deviceId);
+          }
+        }
+      }
+    });
   }
 
   Future<void> refreshDevices() async {
@@ -291,6 +373,13 @@ class MidiController extends Notifier<MidiState> {
       );
       return;
     }
+
+    // Reset reconnect attempts on successful send
+    if (_reconnectAttempts > 0) {
+      _reconnectAttempts = 0;
+      _reconnectTimer?.cancel();
+    }
+
     if (channel < midiMinChannel ||
         channel > midiMaxChannel ||
         controller < midiMinValue ||
