@@ -70,7 +70,9 @@
       "Exec(git push)",
       "Exec(git tag)",
       "Exec(gh run)",
-      "Exec(git branch)"
+      "Exec(git branch)",
+      "Exec(dart doc)",
+      "Exec(dart)"
     ]
   }
 }
