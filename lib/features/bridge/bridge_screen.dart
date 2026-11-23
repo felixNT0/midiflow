@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../application/midi/ble_bridge_provider.dart';
 import '../../application/midi/bridge_provider.dart';
 
 /// Desktop bridge control panel: runs the TCP server, shows the pairing
@@ -75,6 +76,8 @@ class BridgeScreen extends ConsumerWidget {
           if (state.running) ...[
             const SizedBox(height: 16),
             _PairingCard(state: state),
+            const SizedBox(height: 16),
+            _BleBridgeCard(),
             const SizedBox(height: 16),
             _ClientsCard(state: state),
             const SizedBox(height: 16),
@@ -324,6 +327,99 @@ class _Row extends StatelessWidget {
             child: Text(value, style: Theme.of(context).textTheme.bodyMedium),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// BLE bridge card for Bluetooth LE MIDI connections.
+class _BleBridgeCard extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final bleState = ref.watch(bleBridgeProvider);
+    final bleCtrl = ref.read(bleBridgeProvider.notifier);
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.bluetooth,
+                  color: bleState.running
+                      ? Theme.of(context).colorScheme.primary
+                      : Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Bluetooth LE Bridge',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const Spacer(),
+                if (bleState.starting)
+                  const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Allow phones/tablets to connect via Bluetooth instead of Wi-Fi. '
+              'No network required — just enable Bluetooth on both devices.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                icon: Icon(bleState.running ? Icons.stop : Icons.play_arrow),
+                label: Text(
+                  bleState.running ? 'Stop BLE bridge' : 'Start BLE bridge',
+                ),
+                onPressed: bleState.starting
+                    ? null
+                    : (bleState.running ? bleCtrl.stop : bleCtrl.start),
+              ),
+            ),
+            if (bleState.running) ...[
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(
+                    Icons.circle,
+                    size: 8,
+                    color: Colors.green,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Advertising as "MIDIFlow Bridge"',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
+              if (bleState.connectedClients > 0)
+                Text(
+                  '${bleState.connectedClients} client(s) connected',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+            ],
+            if (bleState.error != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                bleState.error!,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.error,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
