@@ -7,45 +7,15 @@ import '../../infrastructure/midi/midi_message_model.dart';
 
 /// MIDI activity monitor: shows recent incoming/outgoing MIDI messages.
 /// Helps debug connection issues and verify controls are working.
-class MidiActivityMonitor extends ConsumerStatefulWidget {
+class MidiActivityMonitor extends ConsumerWidget {
   const MidiActivityMonitor({super.key});
 
   @override
-  ConsumerState<MidiActivityMonitor> createState() => _MidiActivityMonitorState();
-}
-
-class _MidiActivityMonitorState extends ConsumerState<MidiActivityMonitor> {
-  final List<MidiIncomingMessage> _messages = [];
-  static const _maxMessages = 50;
-
-  @override
-  void initState() {
-    super.initState();
-    // Listen to MIDI messages from the provider
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _subscribeToMessages();
-    });
-  }
-
-  void _subscribeToMessages() {
-    // This would need to be implemented in the MIDI service
-    // For now, we'll show a placeholder
-  }
-
-  void _addMessage(MidiIncomingMessage message) {
-    setState(() {
-      _messages.insert(0, message);
-      if (_messages.length > _maxMessages) {
-        _messages.removeLast();
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final midi = ref.watch(midiControllerProvider);
     final bridge = ref.watch(bridgeClientProvider);
     final connected = midi.isConnected || bridge.isConnected;
+    final messages = midi.messages;
 
     return Card(
       child: Padding(
@@ -67,10 +37,10 @@ class _MidiActivityMonitorState extends ConsumerState<MidiActivityMonitor> {
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const Spacer(),
-                if (_messages.isNotEmpty)
+                if (messages.isNotEmpty)
                   IconButton(
                     icon: const Icon(Icons.clear_all),
-                    onPressed: () => setState(() => _messages.clear()),
+                    onPressed: () => ref.read(midiControllerProvider.notifier).clearMessageLog(),
                     tooltip: 'Clear messages',
                   ),
               ],
@@ -83,7 +53,7 @@ class _MidiActivityMonitorState extends ConsumerState<MidiActivityMonitor> {
                       color: Theme.of(context).colorScheme.error,
                     ),
               )
-            else if (_messages.isEmpty)
+            else if (messages.isEmpty)
               Text(
                 'No MIDI messages yet. Move a control to see activity.',
                 style: Theme.of(context).textTheme.bodySmall,
@@ -92,9 +62,10 @@ class _MidiActivityMonitorState extends ConsumerState<MidiActivityMonitor> {
               SizedBox(
                 height: 200,
                 child: ListView.builder(
-                  itemCount: _messages.length,
+                  itemCount: messages.length,
                   itemBuilder: (context, index) {
-                    final msg = _messages[index];
+                    // Show most recent first
+                    final msg = messages[messages.length - 1 - index];
                     return _MessageTile(message: msg);
                   },
                 ),
