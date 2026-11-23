@@ -15,6 +15,7 @@ import '../assign/assign_screen.dart';
 import '../bridge/bridge_screen.dart';
 import '../diagnostics/midi_activity_monitor.dart';
 import '../diagnostics/midi_diagnostics_screen.dart';
+import '../guide/app_guide_screen.dart';
 import '../profiles/profiles_screen.dart';
 import '../sequencer/sequence_recorder.dart';
 
@@ -159,6 +160,15 @@ class SettingsScreen extends ConsumerWidget {
             subtitle: 'Save and load different control layouts for different songs/venues',
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const ProfilesScreen()),
+            ),
+          ),
+          const SizedBox(height: 8),
+          _NavigationCard(
+            icon: Icons.help_outline,
+            title: 'App Guide',
+            subtitle: 'Learn how each screen works and how to use MIDIFlow',
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const AppGuideScreen()),
             ),
           ),
           const SizedBox(height: 16),
