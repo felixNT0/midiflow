@@ -40,7 +40,7 @@ class BleMidiParser {
 
       // Parse header byte
       // BLE MIDI header format:
-      // Bits 7-4: Timestamp (4 bits, but only 3 bits used for 8ms resolution)
+      // Bits 7-4: Timestamp (4 bits)
       // Bits 3-0: Message type (0-7)
       final timestamp = (header >> 4) & 0x0F;
       final messageType = header & 0x0F;
@@ -365,9 +365,8 @@ class BleMidiParser {
     switch (msg.kind) {
       case MidiMessageKind.controlChange:
         if (msg.controller != null && msg.value != null) {
-          // BLE MIDI CC header: Type 3 (CC) + channel
-          final header = 0x30 | ((msg.channel ?? 1) - 1);
-          buffer.addByte(header);
+          // BLE MIDI CC header: Type 3 (CC) + timestamp 0
+          buffer.addByte(0x03);
           buffer.addByte(msg.controller!);
           buffer.addByte(msg.value!);
         }
@@ -375,26 +374,23 @@ class BleMidiParser {
       case MidiMessageKind.noteOn:
       case MidiMessageKind.noteOff:
         if (msg.note != null && msg.value != null) {
-          // BLE MIDI Note header: Type 2 (Notes) + channel
-          final header = 0x20 | ((msg.channel ?? 1) - 1);
-          buffer.addByte(header);
+          // BLE MIDI Note header: Type 2 (Notes) + timestamp 0
+          buffer.addByte(0x02);
           buffer.addByte(msg.note!);
           buffer.addByte(msg.value!);
         }
         break;
       case MidiMessageKind.programChange:
         if (msg.value != null) {
-          // BLE MIDI Program Change header: Type 4 + channel
-          final header = 0x40 | ((msg.channel ?? 1) - 1);
-          buffer.addByte(header);
+          // BLE MIDI Program Change header: Type 4 + timestamp 0
+          buffer.addByte(0x04);
           buffer.addByte(msg.value!);
         }
         break;
       case MidiMessageKind.pitchBend:
         if (msg.value != null) {
-          // BLE MIDI Pitch Bend header: Type 7 + channel
-          final header = 0x70 | ((msg.channel ?? 1) - 1);
-          buffer.addByte(header);
+          // BLE MIDI Pitch Bend header: Type 7 + timestamp 0
+          buffer.addByte(0x07);
           final lsb = msg.value! & 0x7F;
           final msb = (msg.value! >> 7) & 0x7F;
           buffer.addByte(lsb);
