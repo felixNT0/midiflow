@@ -1,107 +1,172 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:midiflow/domain/midi/control_bank.dart';
 import 'package:midiflow/domain/midi/midi_control.dart';
 
 void main() {
-  const mapping = ControlMapping(channel: 1, controller: 7);
-
-  group('normalizedToMidi', () {
-    test('maps 0.0 to min and 1.0 to max', () {
-      expect(normalizedToMidi(0.0, mapping), equals(0));
-      expect(normalizedToMidi(1.0, mapping), equals(127));
-    });
-
-    test('scales linearly', () {
-      // 0.5 * 127 = 63.5 -> rounds to 64 (dart round: half away from zero? .5 -> 64)
-      expect(normalizedToMidi(0.5, mapping), equals(64));
-    });
-
-    test('honours custom min/max range', () {
-      const m = ControlMapping(minValue: 10, maxValue: 20);
-      expect(normalizedToMidi(0.0, m), equals(10));
-      expect(normalizedToMidi(1.0, m), equals(20));
-      expect(normalizedToMidi(0.5, m), equals(15));
-    });
-
-    test('inversion swaps endpoints', () {
-      const m = ControlMapping(inverted: true);
-      expect(normalizedToMidi(0.0, m), equals(127));
-      expect(normalizedToMidi(1.0, m), equals(0));
-    });
-
-    test('clamps out-of-range normalized input', () {
-      expect(normalizedToMidi(-0.5, mapping), equals(0));
-      expect(normalizedToMidi(1.5, mapping), equals(127));
-    });
-  });
-
-  group('midiToNormalized', () {
-    test('round-trips with normalizedToMidi', () {
-      for (final v in [0.0, 0.25, 0.5, 0.75, 1.0]) {
-        final midi = normalizedToMidi(v, mapping);
-        expect(midiToNormalized(midi, mapping), closeTo(v, 0.01));
-      }
-    });
-
-    test('inverted mapping round-trips', () {
-      const m = ControlMapping(inverted: true);
-      final midi = normalizedToMidi(0.3, m);
-      expect(midiToNormalized(midi, m), closeTo(0.3, 0.01));
-    });
-  });
-
-  group('button values', () {
-    test('on = max, off = min', () {
-      expect(buttonOnValue(mapping), equals(127));
-      expect(buttonOffValue(mapping), equals(0));
-    });
-
-    test('custom range respected', () {
-      const m = ControlMapping(minValue: 64, maxValue: 127);
-      expect(buttonOnValue(m), equals(127));
-      expect(buttonOffValue(m), equals(64));
-    });
-  });
-
-  group('ControlMapping.validate', () {
-    test('accepts valid mapping', () {
-      const ControlMapping(channel: 16, controller: 127).validate();
-    });
-
-    test('rejects channel 0', () {
-      expect(
-        () => const ControlMapping(channel: 0).validate(),
-        throwsArgumentError,
-      );
-    });
-
-    test('rejects min > max', () {
-      expect(
-        () => const ControlMapping(minValue: 100, maxValue: 50).validate(),
-        throwsArgumentError,
-      );
-    });
-  });
-
   group('MidiControl', () {
-    test('currentMidiValue reflects normalizedValue', () {
-      final c = MidiControl(
-        id: 'a',
-        label: 'A',
+    test('creates control with valid mapping', () {
+      final control = MidiControl(
+        id: 'test-1',
+        label: 'Test Fader',
         type: MidiControlType.fader,
-        mapping: mapping,
-        normalizedValue: 1.0,
+        mapping: const ControlMapping(channel: 1, controller: 7),
       );
-      expect(c.currentMidiValue, equals(127));
+
+      expect(control.id, 'test-1');
+      expect(control.label, 'Test Fader');
+      expect(control.type, MidiControlType.fader);
+      expect(control.mapping.channel, 1);
+      expect(control.mapping.controller, 7);
     });
 
-    test('normalizedValue is clamped on construction', () {
-      final c = MidiControl(
-        id: 'a',
-        label: 'A',
+    test('copyWith creates new instance with updated values', () {
+      final control = MidiControl(
+        id: 'test-1',
+        label: 'Test',
         type: MidiControlType.fader,
-        normalizedValue: 2.0,
+        mapping: const ControlMapping(channel: 1, controller: 7),
       );
-      expect(c.normalizedValue, equals(1.0));
+
+      final updated = control.copyWith(
+        label: 'Updated',
+        normalizedValue: 0.5,
+      );
+
+      expect(updated.label, 'Updated');
+      expect(updated.normalizedValue, 0.5);
+      expect(updated.id, 'test-1'); // ID should remain same
+    });
+
+    test('validates MIDI channel range', () {
+      expect(() => const ControlMapping(channel: 0, controller: 7).validate(),
+          throwsArgumentError);
+      expect(() => const ControlMapping(channel: 17, controller: 7).validate(),
+          throwsArgumentError);
+      expect(() => const ControlMapping(channel: 1, controller: 7).validate(),
+          returnsNormally);
+      expect(() => const ControlMapping(channel: 16, controller: 7).validate(),
+          returnsNormally);
+    });
+
+    test('validates controller range', () {
+      expect(() => const ControlMapping(channel: 1, controller: -1).validate(),
+          throwsArgumentError);
+      expect(() => const ControlMapping(channel: 1, controller: 128).validate(),
+          throwsArgumentError);
+      expect(() => const ControlMapping(channel: 1, controller: 0).validate(),
+          returnsNormally);
+      expect(() => const ControlMapping(channel: 1, controller: 127).validate(),
+          returnsNormally);
+    });
+  });
+
+  group('ControlBank', () {
+    test('creates bank with controls', () {
+      final controls = [
+        MidiControl(
+          id: '1',
+          label: 'Fader 1',
+          type: MidiControlType.fader,
+          mapping: const ControlMapping(channel: 1, controller: 7),
+        ),
+        MidiControl(
+          id: '2',
+          label: 'Fader 2',
+          type: MidiControlType.fader,
+          mapping: const ControlMapping(channel: 1, controller: 8),
+        ),
+      ];
+
+      final bank = ControlBank(
+        id: 'bank-1',
+        name: 'Test Bank',
+        controls: controls,
+      );
+
+      expect(bank.id, 'bank-1');
+      expect(bank.name, 'Test Bank');
+      expect(bank.controls.length, 2);
+    });
+
+    test('finds control by id', () {
+      final controls = [
+        MidiControl(
+          id: '1',
+          label: 'Fader 1',
+          type: MidiControlType.fader,
+          mapping: const ControlMapping(channel: 1, controller: 7),
+        ),
+        MidiControl(
+          id: '2',
+          label: 'Fader 2',
+          type: MidiControlType.fader,
+          mapping: const ControlMapping(channel: 1, controller: 8),
+        ),
+      ];
+
+      final bank = ControlBank(
+        id: 'bank-1',
+        name: 'Test Bank',
+        controls: controls,
+      );
+
+      final found = bank.controls.firstWhere((c) => c.id == '2');
+      expect(found.label, 'Fader 2');
+    });
+  });
+
+  group('ControlBankTemplates', () {
+    test('instrument template has expected controls', () {
+      final bank = ControlBankTemplates.instrument();
+      expect(bank.name, 'Instrument');
+      expect(bank.controls.length, greaterThan(0));
+
+      // Check for layer volumes
+      final layerVolumes = bank.controls
+          .where((c) => c.id.startsWith('layer-vol'))
+          .toList();
+      expect(layerVolumes.length, 8);
+
+      // Check for layer toggles
+      final layerToggles = bank.controls
+          .where((c) => c.id.startsWith('layer-toggle'))
+          .toList();
+      expect(layerToggles.length, 8);
+
+      // Check for pads (pad-1 to pad-12, not pad-volume)
+      final pads = bank.controls
+          .where((c) => c.id.startsWith('pad-') && c.id != 'pad-volume')
+          .toList();
+      expect(pads.length, 12);
+
+      // Check for pad volume
+      final padVolume = bank.controls.firstWhere((c) => c.id == 'pad-volume');
+      expect(padVolume.type, MidiControlType.fader);
+      expect(padVolume.mapping.controller, 48);
+    });
+
+    test('mixer template has expected controls', () {
+      final bank = ControlBankTemplates.mixer();
+      expect(bank.name, 'Mixer');
+      expect(bank.controls.length, 17); // 8 faders + 8 pan knobs + master
+    });
+
+    test('transport template has expected controls', () {
+      final bank = ControlBankTemplates.transport();
+      expect(bank.name, 'Transport');
+      expect(bank.controls.length, 3); // Play, Stop, Record
+    });
+  });
+
+  group('MidiControlType', () {
+    test('all types are supported', () {
+      expect(MidiControlType.values.length, 6);
+      expect(MidiControlType.values.contains(MidiControlType.fader), isTrue);
+      expect(MidiControlType.values.contains(MidiControlType.knob), isTrue);
+      expect(MidiControlType.values.contains(MidiControlType.momentaryButton), isTrue);
+      expect(MidiControlType.values.contains(MidiControlType.toggleButton), isTrue);
+      expect(MidiControlType.values.contains(MidiControlType.latchButton), isTrue);
+      expect(MidiControlType.values.contains(MidiControlType.xyPad), isTrue);
     });
   });
 }

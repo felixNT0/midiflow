@@ -32,6 +32,7 @@ class HorizontalFaderControl extends StatelessWidget {
       enabled: enabled,
       midiValue: midiValue,
       builder: (context, v, active) => Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Text(
             '$label${midiValue != null ? ' · $midiValue' : ''}',
@@ -39,9 +40,9 @@ class HorizontalFaderControl extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 4),
-          Expanded(
+          SizedBox(
+            height: 56,
             child: Container(
-              height: 56,
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(8),
