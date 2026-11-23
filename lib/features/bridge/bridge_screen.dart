@@ -29,13 +29,14 @@ class BridgeScreen extends ConsumerWidget {
                   Row(
                     children: [
                       Icon(
-                        state.running ? Icons.circle : Icons.circle_outlined,
-                        size: 12,
-                        color: state.running ? Colors.green : Colors.grey,
+                        Icons.wifi,
+                        color: state.running
+                            ? Theme.of(context).colorScheme.primary
+                            : Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        state.running ? 'Bridge running' : 'Bridge stopped',
+                        'Wi-Fi Bridge (TCP)',
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       const Spacer(),
@@ -53,7 +54,7 @@ class BridgeScreen extends ConsumerWidget {
                     child: FilledButton.icon(
                       icon: Icon(state.running ? Icons.stop : Icons.play_arrow),
                       label: Text(
-                        state.running ? 'Stop bridge' : 'Start bridge',
+                        state.running ? 'Stop Wi-Fi bridge' : 'Start Wi-Fi bridge',
                       ),
                       onPressed: state.starting || state.stopping
                           ? null
@@ -73,11 +74,11 @@ class BridgeScreen extends ConsumerWidget {
               ),
             ),
           ),
+          const SizedBox(height: 16),
+          _BleBridgeCard(),
           if (state.running) ...[
             const SizedBox(height: 16),
             _PairingCard(state: state),
-            const SizedBox(height: 16),
-            _BleBridgeCard(),
             const SizedBox(height: 16),
             _ClientsCard(state: state),
             const SizedBox(height: 16),
@@ -355,7 +356,7 @@ class _BleBridgeCard extends ConsumerWidget {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Bluetooth LE Bridge',
+                  'Bluetooth LE Bridge (Independent)',
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const Spacer(),
@@ -370,7 +371,8 @@ class _BleBridgeCard extends ConsumerWidget {
             const SizedBox(height: 8),
             Text(
               'Allow phones/tablets to connect via Bluetooth instead of Wi-Fi. '
-              'No network required — just enable Bluetooth on both devices.',
+              'No network required — just enable Bluetooth on both devices. '
+              'This runs independently from the Wi-Fi bridge above.',
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 12),
