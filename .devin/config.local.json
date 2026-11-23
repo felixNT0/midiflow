@@ -69,7 +69,8 @@
       "Exec(git commit)",
       "Exec(git push)",
       "Exec(git tag)",
-      "Exec(gh run)"
+      "Exec(gh run)",
+      "Exec(git branch)"
     ]
   }
 }
