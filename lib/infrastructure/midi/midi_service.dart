@@ -5,6 +5,7 @@ import 'package:flutter_midi_command/flutter_midi_command.dart';
 import 'package:flutter_midi_command/flutter_midi_command_messages.dart';
 import 'package:flutter_midi_command_ble/flutter_midi_command_ble.dart';
 
+import '../logging/app_logger.dart';
 import 'midi_device_model.dart';
 import 'midi_message_model.dart';
 
@@ -80,6 +81,7 @@ class MidiService {
     }
     _status = MidiEngineStatus.initializing;
     _lastError = null;
+    appLogger.info('MIDI service initializing...');
     try {
       // Streams must be obtained after BLE transport configuration (done in
       // the constructor) and subscribed before scanning starts.
@@ -93,8 +95,9 @@ class MidiService {
         await _midi.waitUntilBluetoothIsInitialized();
         if (_midi.bluetoothState == BluetoothState.poweredOn) {
           await _midi.startScanningForBluetoothDevices();
+          appLogger.info('BLE scanning started');
         } else {
-          debugPrint(
+          appLogger.warning(
             'BLE MIDI: Bluetooth state is ${_midi.bluetoothState}; '
             'BLE scan not started.',
           );
@@ -103,9 +106,11 @@ class MidiService {
 
       await refreshDevices();
       _status = MidiEngineStatus.ready;
-    } catch (e) {
+      appLogger.info('MIDI service ready');
+    } catch (e, stackTrace) {
       _status = MidiEngineStatus.error;
       _lastError = e.toString();
+      appLogger.error('MIDI service initialization failed', e, stackTrace);
       rethrow;
     }
   }
@@ -144,9 +149,10 @@ class MidiService {
       if (otherDevice.id != device.id && otherDevice.connected) {
         try {
           _midi.disconnectDevice(otherDevice);
+          appLogger.info('Disconnected ${otherDevice.name} to connect ${device.name}');
         } catch (e) {
           // Ignore disconnect errors for other devices
-          debugPrint('Failed to disconnect ${otherDevice.name}: $e');
+          appLogger.warning('Failed to disconnect ${otherDevice.name}: $e');
         }
       }
     }
@@ -156,9 +162,12 @@ class MidiService {
       // Refresh so the snapshot reflects the connected state and any ports
       // the platform exposed after connecting.
       await refreshDevices();
+      appLogger.info('Connected to ${device.name}');
     } on MidiConnectionException {
+      appLogger.error('Failed to connect to ${device.name}');
       rethrow;
-    } catch (e) {
+    } catch (e, stackTrace) {
+      appLogger.error('Failed to connect to ${device.name}', e, stackTrace);
       throw MidiServiceException(
         'Failed to connect to ${device.name}.',
         cause: e,
@@ -182,8 +191,9 @@ class MidiService {
       if (device.connected) {
         try {
           _midi.disconnectDevice(device);
-        } catch (e) {
-          debugPrint('Failed to disconnect ${device.name}: $e');
+          appLogger.info('Disconnected ${device.name}');
+        } catch (e, stackTrace) {
+          appLogger.warning('Failed to disconnect ${device.name}: $e', e, stackTrace);
         }
       }
     }
@@ -209,7 +219,15 @@ class MidiService {
     _requirePluginDevice(device.id);
     try {
       await _midi.sendDataAwaitingDelivery(bytes, deviceId: device.id);
-    } catch (e) {
+      appLogger.debug(
+        'Sent CC ch=$channel cc=$controller val=$value to ${device.name}',
+      );
+    } catch (e, stackTrace) {
+      appLogger.error(
+        'Failed to send CC$controller=$value on channel $channel to ${device.name}',
+        e,
+        stackTrace,
+      );
       throw MidiServiceException(
         'Failed to send CC$controller=$value on channel $channel.',
         cause: e,
