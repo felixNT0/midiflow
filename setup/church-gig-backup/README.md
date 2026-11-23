@@ -13,6 +13,10 @@ This folder contains everything you need for your church performance on November
 | `MIDIFlow-macos.zip` | macOS installer (18.5MB) |
 | `MIDIFlow/` | FL Studio script backup |
 | `Documents-Image-Line/` | Alternative FL Studio script location backup |
+| `build_ios.sh` | Automated iOS build script |
+| `build_linux.sh` | Linux build script |
+| `build_windows.bat` | Windows build script |
+| `create_release.sh` | Automated release creation script |
 
 ## 🚀 Quick Start (Big Day)
 
