@@ -1,8 +1,12 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../infrastructure/midi/midi_device_model.dart';
+import '../../infrastructure/midi/network/ble_midi_parser.dart';
 import '../../infrastructure/midi/network/ble_midi_peripheral.dart';
+import 'midi_provider.dart';
 
 /// BLE MIDI peripheral state for desktop bridge.
 class BleBridgeState {
@@ -83,11 +87,14 @@ class BleBridgeController extends Notifier<BleBridgeState> {
   }
 
   void _handleMidiData(List<int> data) {
-    // Convert BLE MIDI data to standard MIDI messages
-    // BLE MIDI uses a different format with timestamp headers
-    // For now, we'll pass raw data to the MIDI service
-    // This needs to be implemented based on BLE MIDI spec
-    _sendToMidiService(data);
+    // Parse BLE MIDI packet and convert to standard MIDI messages
+    final packet = Uint8List.fromList(data);
+    final messages = BleMidiParser.parsePacket(packet);
+
+    // Send parsed messages to MIDI service
+    for (final msg in messages) {
+      _sendToMidiService(msg);
+    }
   }
 
   void _handleConnectionState(String connectionState) {
@@ -101,11 +108,31 @@ class BleBridgeController extends Notifier<BleBridgeState> {
     }
   }
 
-  void _sendToMidiService(List<int> data) {
-    // This would need to integrate with the MIDI service
-    // to send the received MIDI data to FL Studio
-    // For now, we'll just log it
-    print('BLE MIDI data received: ${data.length} bytes');
+  void _sendToMidiService(MidiMessage message) {
+    // Convert parsed MIDI message to standard MIDI and send to FL Studio
+    // This integrates with the existing MIDI service
+    final midiService = ref.read(midiServiceProvider);
+    final device = _getSelectedDevice();
+
+    if (device == null) return;
+
+    if (message.kind == MidiMessageKind.controlChange &&
+        message.controller != null &&
+        message.value != null) {
+      // Send CC message
+      midiService.sendControlChange(
+        device: device,
+        channel: message.channel ?? 1,
+        controller: message.controller!,
+        value: message.value!,
+      );
+    }
+  }
+
+  MidiDeviceInfo? _getSelectedDevice() {
+    // Get the currently selected MIDI device
+    final midiState = ref.read(midiControllerProvider);
+    return midiState.selectedDevice;
   }
 
   /// Sends MIDI data to connected BLE clients.
