@@ -16,6 +16,7 @@ import '../bridge/bridge_screen.dart';
 import '../diagnostics/midi_activity_monitor.dart';
 import '../diagnostics/midi_diagnostics_screen.dart';
 import '../profiles/profiles_screen.dart';
+import '../sequencer/sequence_recorder.dart';
 
 /// App settings: connection shortcuts and engine status. Detailed MIDI
 /// controls live on the diagnostics screen.
@@ -166,6 +167,8 @@ class SettingsScreen extends ConsumerWidget {
           const _ControlLabelsCard(),
           const SizedBox(height: 16),
           const MidiActivityMonitor(),
+          const SizedBox(height: 16),
+          const SequenceRecorder(),
         ],
       ),
     );
