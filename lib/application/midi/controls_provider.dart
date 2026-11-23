@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../application/midi/midi_provider.dart';
+import '../../application/sequencer/sequence_service.dart';
 import '../../domain/midi/control_bank.dart';
 import '../../domain/midi/midi_control.dart';
 import 'bridge_provider.dart';
@@ -451,6 +452,11 @@ class ControlsController extends Notifier<ControlsState> {
     _updateNormalized(control, normalized);
     await sendControl(control.copyWith(normalizedValue: normalized));
     unawaited(savePersisted());
+    // Record for sequence playback
+    ref.read(sequenceServiceProvider.notifier).recordEvent(
+      control.id,
+      normalized,
+    );
   }
 
   /// XY pad gesture entry point: updates both axes and sends both CCs.
@@ -465,6 +471,12 @@ class ControlsController extends Notifier<ControlsState> {
       yNormalized: y,
     );
     unawaited(savePersisted());
+    // Record for sequence playback
+    ref.read(sequenceServiceProvider.notifier).recordEvent(
+      control.id,
+      x,
+      yValue: y,
+    );
   }
 
   /// Momentary button: sends on value at press, off value at release.
@@ -480,6 +492,11 @@ class ControlsController extends Notifier<ControlsState> {
     await _sendButtonValue(control, down: !on);
     _updateNormalized(control, on ? 0.0 : 1.0);
     unawaited(savePersisted());
+    // Record for sequence playback
+    ref.read(sequenceServiceProvider.notifier).recordEvent(
+      control.id,
+      on ? 0.0 : 1.0,
+    );
   }
 
   Future<void> _sendButtonValue(MidiControl control, {required bool down}) {

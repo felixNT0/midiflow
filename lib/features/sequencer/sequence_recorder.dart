@@ -1,246 +1,21 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../application/midi/controls_provider.dart';
+import '../../application/sequencer/sequence_service.dart';
 import '../../domain/midi/midi_control.dart';
 
-/// A recorded sequence of control movements.
-class RecordedSequence {
-  const RecordedSequence({
-    required this.id,
-    required this.name,
-    required this.createdAt,
-    required this.events,
-  });
-
-  final String id;
-  final String name;
-  final DateTime createdAt;
-  final List<SequenceEvent> events;
-
-  Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'createdAt': createdAt.toIso8601String(),
-        'events': events.map((e) => e.toJson()).toList(),
-      };
-
-  factory RecordedSequence.fromJson(Map<String, dynamic> json) {
-    return RecordedSequence(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      events: (json['events'] as List)
-          .map((e) => SequenceEvent.fromJson(e as Map<String, dynamic>))
-          .toList(),
-    );
-  }
-}
-
-/// A single event in a recorded sequence.
-class SequenceEvent {
-  const SequenceEvent({
-    required this.timestamp,
-    required this.controlId,
-    required this.value,
-  });
-
-  final DateTime timestamp;
-  final String controlId;
-  final double value;
-
-  Map<String, dynamic> toJson() => {
-        'timestamp': timestamp.toIso8601String(),
-        'controlId': controlId,
-        'value': value,
-      };
-
-  factory SequenceEvent.fromJson(Map<String, dynamic> json) {
-    return SequenceEvent(
-      timestamp: DateTime.parse(json['timestamp'] as String),
-      controlId: json['controlId'] as String,
-      value: (json['value'] as num).toDouble(),
-    );
-  }
-}
-
-/// Controller for recording and playing back control sequences.
-class SequenceController extends Notifier<SequenceState> {
-  static const _prefsKey = 'midiflow_sequences_v1';
-
-  @override
-  SequenceState build() {
-    return const SequenceState(
-      sequences: [],
-      isRecording: false,
-      isPlaying: false,
-      currentSequence: null,
-    );
-  }
-
-  Future<void> loadSequences() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final json = prefs.getString(_prefsKey);
-      if (json != null && json.isNotEmpty) {
-        final data = jsonDecode(json) as List;
-        final sequences = data
-            .map((e) => RecordedSequence.fromJson(e as Map<String, dynamic>))
-            .toList();
-        state = state.copyWith(sequences: sequences);
-      }
-    } catch (e) {
-      // Ignore load errors
-    }
-  }
-
-  Future<void> saveSequences() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(
-        _prefsKey,
-        jsonEncode(state.sequences.map((s) => s.toJson()).toList()),
-      );
-    } catch (e) {
-      // Ignore save errors
-    }
-  }
-
-  void startRecording() {
-    state = state.copyWith(
-      isRecording: true,
-      currentSequence: RecordedSequence(
-        id: 'seq-${DateTime.now().millisecondsSinceEpoch}',
-        name: 'Sequence ${state.sequences.length + 1}',
-        createdAt: DateTime.now(),
-        events: [],
-      ),
-    );
-  }
-
-  void stopRecording() {
-    if (state.currentSequence != null && state.currentSequence!.events.isNotEmpty) {
-      final sequence = state.currentSequence!;
-      state = state.copyWith(
-        isRecording: false,
-        sequences: [...state.sequences, sequence],
-        currentSequence: null,
-      );
-      saveSequences();
-    } else {
-      state = state.copyWith(isRecording: false, currentSequence: null);
-    }
-  }
-
-  void recordEvent(String controlId, double value) {
-    if (!state.isRecording || state.currentSequence == null) return;
-
-    final event = SequenceEvent(
-      timestamp: DateTime.now(),
-      controlId: controlId,
-      value: value,
-    );
-
-    state = state.copyWith(
-      currentSequence: RecordedSequence(
-        id: state.currentSequence!.id,
-        name: state.currentSequence!.name,
-        createdAt: state.currentSequence!.createdAt,
-        events: [...state.currentSequence!.events, event],
-      ),
-    );
-  }
-
-  Future<void> playSequence(String sequenceId) async {
-    final sequence = state.sequences.firstWhere(
-      (s) => s.id == sequenceId,
-      orElse: () => throw Exception('Sequence not found'),
-    );
-
-    state = state.copyWith(isPlaying: true);
-
-    final startTime = DateTime.now();
-    for (final event in sequence.events) {
-      final elapsed = event.timestamp.difference(sequence.events.first.timestamp);
-      final delay = elapsed.inMilliseconds;
-      await Future.delayed(Duration(milliseconds: delay));
-
-      // Find and update the control
-      final controlsState = ref.read(controlsProvider);
-      for (final bank in controlsState.banks) {
-        for (final control in bank.controls) {
-          if (control.id == event.controlId) {
-            await ref
-                .read(controlsProvider.notifier)
-                .setNormalized(control, event.value);
-            break;
-          }
-        }
-      }
-    }
-
-    state = state.copyWith(isPlaying: false);
-  }
-
-  void stopPlayback() {
-    state = state.copyWith(isPlaying: false);
-  }
-
-  void deleteSequence(String sequenceId) {
-    state = state.copyWith(
-      sequences: state.sequences.where((s) => s.id != sequenceId).toList(),
-    );
-    saveSequences();
-  }
-}
-
-class SequenceState {
-  const SequenceState({
-    required this.sequences,
-    required this.isRecording,
-    required this.isPlaying,
-    required this.currentSequence,
-  });
-
-  final List<RecordedSequence> sequences;
-  final bool isRecording;
-  final bool isPlaying;
-  final RecordedSequence? currentSequence;
-
-  SequenceState copyWith({
-    List<RecordedSequence>? sequences,
-    bool? isRecording,
-    bool? isPlaying,
-    RecordedSequence? currentSequence,
-    bool clearCurrentSequence = false,
-  }) {
-    return SequenceState(
-      sequences: sequences ?? this.sequences,
-      isRecording: isRecording ?? this.isRecording,
-      isPlaying: isPlaying ?? this.isPlaying,
-      currentSequence: clearCurrentSequence
-          ? null
-          : (currentSequence ?? this.currentSequence),
-    );
-  }
-}
-
-final sequenceProvider = NotifierProvider<SequenceController, SequenceState>(
-  SequenceController.new,
-);
-
 /// UI for recording and playing back control sequences.
+/// Uses the sequence_service for data management.
 class SequenceRecorder extends ConsumerWidget {
   const SequenceRecorder({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(sequenceProvider);
-    final ctrl = ref.read(sequenceProvider.notifier);
+    final state = ref.watch(sequenceServiceProvider);
+    final service = ref.read(sequenceServiceProvider.notifier);
 
     return Card(
       child: Padding(
@@ -291,13 +66,13 @@ class SequenceRecorder extends ConsumerWidget {
               children: [
                 if (!state.isRecording && !state.isPlaying)
                   FilledButton.icon(
-                    onPressed: ctrl.startRecording,
+                    onPressed: service.startRecording,
                     icon: const Icon(Icons.fiber_manual_record),
                     label: const Text('Record'),
                   )
                 else if (state.isRecording)
                   FilledButton.icon(
-                    onPressed: ctrl.stopRecording,
+                    onPressed: service.stopRecording,
                     icon: const Icon(Icons.stop),
                     label: const Text('Stop'),
                     style: FilledButton.styleFrom(
@@ -306,7 +81,7 @@ class SequenceRecorder extends ConsumerWidget {
                   )
                 else
                   OutlinedButton.icon(
-                    onPressed: ctrl.stopPlayback,
+                    onPressed: () => service.stopPlayback(),
                     icon: const Icon(Icons.stop),
                     label: const Text('Stop'),
                   ),
@@ -325,7 +100,7 @@ class SequenceRecorder extends ConsumerWidget {
                       ],
                       onChanged: (id) {
                         if (id != null && !state.isPlaying) {
-                          ctrl.playSequence(id);
+                          _playSequence(ref, id);
                         }
                       },
                     ),
@@ -340,7 +115,7 @@ class SequenceRecorder extends ConsumerWidget {
                   for (final seq in state.sequences)
                     Chip(
                       label: Text(seq.name),
-                      onDeleted: () => ctrl.deleteSequence(seq.id),
+                      onDeleted: () => service.deleteSequence(seq.id),
                     ),
                 ],
               ),
@@ -349,5 +124,48 @@ class SequenceRecorder extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _playSequence(WidgetRef ref, String sequenceId) async {
+    final service = ref.read(sequenceServiceProvider.notifier);
+    final sequence = service.getSequence(sequenceId);
+    if (sequence == null) return;
+
+    // Mark as playing
+    ref.read(sequenceServiceProvider.notifier).state = ref
+        .read(sequenceServiceProvider)
+        .copyWith(isPlaying: true);
+
+    final controlsCtrl = ref.read(controlsProvider.notifier);
+    final controlsState = ref.read(controlsProvider);
+
+    // Find start time for timing
+    final startTime = sequence.events.isNotEmpty
+        ? sequence.events.first.timestamp
+        : DateTime.now();
+
+    for (final event in sequence.events) {
+      final elapsed = event.timestamp.difference(startTime);
+      await Future.delayed(Duration(milliseconds: elapsed.inMilliseconds));
+
+      // Find the control across all banks
+      for (final bank in controlsState.banks) {
+        for (final control in bank.controls) {
+          if (control.id == event.controlId) {
+            if (event.yValue != null) {
+              await controlsCtrl.setXY(control, event.value, event.yValue!);
+            } else {
+              await controlsCtrl.setNormalized(control, event.value);
+            }
+            break;
+          }
+        }
+      }
+    }
+
+    // Mark as not playing
+    ref.read(sequenceServiceProvider.notifier).state = ref
+        .read(sequenceServiceProvider)
+        .copyWith(isPlaying: false);
   }
 }
