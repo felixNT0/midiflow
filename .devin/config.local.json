@@ -63,7 +63,13 @@
       "Exec(git check-ignore)",
       "Exec(git ls-files)",
       "Exec(git log)",
-      "Exec(git diff)"
+      "Exec(git diff)",
+      "Exec(git show)",
+      "Exec(git add)",
+      "Exec(git commit)",
+      "Exec(git push)",
+      "Exec(git tag)",
+      "Exec(gh run)"
     ]
   }
 }
