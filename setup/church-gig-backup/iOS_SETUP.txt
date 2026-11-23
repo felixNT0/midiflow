@@ -1,0 +1,209 @@
+═══════════════════════════════════════════════════════════════════════════════
+                    MIDIFlow iOS SETUP GUIDE
+                    For iPhone/iPad Users
+═══════════════════════════════════════════════════════════════════════════════
+
+CURRENT STATUS:
+• Android APK: ✅ Ready to install
+• macOS app: ✅ Ready to install
+• iOS: ⚠️ Requires Apple Developer account + Xcode build
+
+WHY iOS IS DIFFERENT:
+• Apple requires apps to be signed with a developer certificate
+• You can't just download an IPA file like Android APK
+• Need either:
+  1. Apple Developer Program ($99/year) for App Store distribution
+  2. Free Apple ID for 7-day testing (limited)
+  3. Enterprise certificate (for business use)
+
+═══════════════════════════════════════════════════════════════════════════════
+                    OPTION 1: FREE APPLE ID (7-DAY TESTING)
+═══════════════════════════════════════════════════════════════════════════════
+
+REQUIREMENTS:
+• Mac computer with Xcode installed
+• Apple ID (free, same as iCloud)
+• iPhone/iPad with USB cable
+
+STEPS:
+
+1. INSTALL XCODE (if not already installed)
+   └─ Download from Mac App Store (free)
+   └─ Or download from developer.apple.com
+   └─ Install and open once to accept license
+
+2. BUILD THE iOS APP
+   └─ Open Terminal
+   └─ Navigate to project: cd /Users/user/Projects/midiflow
+   └─ Run: flutter build ios --release
+   └─ This creates the iOS build files
+
+3. OPEN IN XCODE
+   └─ Run: open ios/Runner.xcworkspace
+   └─ Xcode will open the project
+
+4. CONFIGURE SIGNING
+   └─ In Xcode, select "Runner" project
+   └─ Go to "Signing & Capabilities" tab
+   └─ Check "Automatically manage signing"
+   └─ Select your Team (your Apple ID)
+   └─ If prompted, sign in with your Apple ID
+
+5. CONNECT YOUR iPHONE
+   └─ Plug iPhone into Mac via USB
+   └─ Trust the computer on iPhone if prompted
+   └─ In Xcode, select your iPhone as target device
+
+6. BUILD AND RUN
+   └─ Click the "Run" button (play icon) in Xcode
+   └─ Xcode will build and install on your iPhone
+   └─ First time may take 5-10 minutes
+
+7. TRUST THE DEVELOPER (on iPhone)
+   └─ Go to Settings → General → VPN & Device Management
+   └─ Find your Apple ID under "Developer App"
+   └─ Tap "Trust" to allow the app to run
+
+8. USE THE APP
+   └─ MIDIFlow will appear on your iPhone home screen
+   └─ Open it and connect to your laptop bridge
+   └─ NOTE: Free signing expires after 7 days - you'll need to rebuild weekly
+
+LIMITATIONS:
+• App expires after 7 days (must rebuild/reinstall)
+• Can't distribute to other people
+• Only works on devices registered to your Apple ID
+• Maximum 3 apps per device with free account
+
+═══════════════════════════════════════════════════════════════════════════════
+                    OPTION 2: APPLE DEVELOPER PROGRAM ($99/YEAR)
+═══════════════════════════════════════════════════════════════════════════════
+
+REQUIREMENTS:
+• Paid Apple Developer Program membership
+• Mac with Xcode
+• iPhone/iPad for testing
+
+BENEFITS:
+• Apps don't expire (1 year for development, 90 days for TestFlight)
+• Can distribute via TestFlight to up to 10,000 testers
+• Can submit to App Store
+• Can use advanced features (push notifications, etc.)
+
+STEPS:
+
+1. ENROLL IN APPLE DEVELOPER PROGRAM
+   └─ Go to developer.apple.com/programs/
+   └─ Click "Enroll" and pay $99/year
+   └─ Wait for approval (usually 24-48 hours)
+
+2. BUILD AND DISTRIBUTE
+   └─ Same Xcode process as Option 1
+   └─ Can create .ipa file for distribution
+   └─ Can upload to TestFlight for beta testing
+   └─ Can submit to App Store for public release
+
+3. TESTFLIGHT (Recommended for testing)
+   └─ Upload build to App Store Connect
+   └─ Add testers by email
+   └─ They get TestFlight app and can install
+   └─ Builds expire after 90 days
+
+═══════════════════════════════════════════════════════════════════════════════
+                    OPTION 3: ENTERPRISE CERTIFICATE (BUSINESS)
+═══════════════════════════════════════════════════════════════════════════════
+
+FOR CHURCH/BUSINESS USE:
+• If your church has multiple devices needing the app
+• Enterprise certificate allows internal distribution
+• No App Store review required
+• No expiration for internal apps
+
+REQUIREMENTS:
+• Apple Developer Enterprise Program ($299/year)
+• D-U-N-S number (business registration)
+• Legal business entity
+
+STEPS:
+1. Enroll in Enterprise Program
+2. Create enterprise provisioning profile
+3. Sign app with enterprise certificate
+4. Distribute .ipa file directly to devices
+5. Users install via MDM or manual installation
+
+═══════════════════════════════════════════════════════════════════════════════
+                    RECOMMENDED FOR YOUR CHURCH GIG
+═══════════════════════════════════════════════════════════════════════════════
+
+IF YOU NEED iPHONE SUPPORT NOW:
+
+1. USE FREE APPLE ID METHOD (Option 1)
+   └─ Works for personal testing
+   └─ 7-day expiry is fine for one-time gig
+   └─ Can rebuild after gig if needed
+
+2. IF CHURCH HAS MULTIPLE DEVICES:
+   └─ Consider Apple Developer Program ($99/year)
+   └─ Worth it if you'll use this regularly
+   └─ Allows TestFlight distribution to team
+
+3. ALTERNATIVE: USE ANDROID DEVICE
+   └─ If you have an Android phone/tablet available
+   └─ Install the APK directly (no signing needed)
+   └─ Works immediately with no Apple requirements
+
+═══════════════════════════════════════════════════════════════════════════════
+                    BUILD COMMANDS REFERENCE
+═══════════════════════════════════════════════════════════════════════════════
+
+Build iOS app:
+  cd /Users/user/Projects/midiflow
+  flutter build ios --release
+
+Build iOS simulator (for testing):
+  flutter build ios --simulator
+
+Open in Xcode:
+  open ios/Runner.xcworkspace
+
+Clean build (if errors):
+  flutter clean
+  flutter pub get
+  flutter build ios --release
+
+═══════════════════════════════════════════════════════════════════════════════
+                    TROUBLESHOOTING iOS BUILD
+═══════════════════════════════════════════════════════════════════════════════
+
+Error: "No signing certificate found"
+  → Open Xcode → Settings → Accounts → Add Apple ID
+  → Select your Team in project settings
+
+Error: "Provisioning profile doesn't include device"
+  → Connect device to Mac
+  → Xcode should auto-register it
+  → Or manually add in developer portal
+
+Error: "Flutter version mismatch"
+  → Run: flutter upgrade
+  → Then: flutter clean && flutter pub get
+
+Error: "CocoaPods not installed"
+  → Run: sudo gem install cocoapods
+  → Or: brew install cocoapods
+
+═══════════════════════════════════════════════════════════════════════════════
+                    QUICK CHECKLIST FOR iOS
+═══════════════════════════════════════════════════════════════════════════════
+
+□ Mac with Xcode installed
+□ Apple ID ready (free or paid developer)
+□ iPhone/iPad connected via USB
+□ Project builds successfully: flutter build ios --release
+□ Xcode signing configured
+□ App installs on device
+□ Trust developer certificate on iPhone
+□ App connects to laptop bridge
+□ All controls work as expected
+
+═══════════════════════════════════════════════════════════════════════════════

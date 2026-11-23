@@ -1,0 +1,149 @@
+═══════════════════════════════════════════════════════════════════════════════
+                    MIDIFlow QUICK START GUIDE
+                    For Church Gig - November 23, 2026
+═══════════════════════════════════════════════════════════════════════════════
+
+THIS GUIDE ASSUMES:
+• You've already tested MIDIFlow at home and it works
+• Your laptop and phone are charged
+• You have church Wi-Fi credentials or can use phone hotspot
+• FL Studio and Kontakt are installed and working
+
+═══════════════════════════════════════════════════════════════════════════════
+                         STEP 1: LAPTOP SETUP (5 min)
+═══════════════════════════════════════════════════════════════════════════════
+
+1. Open MIDIFlow app on your Mac
+   └─ You'll see the "Desktop Bridge" screen
+   └─ It shows: IP Address, Port (8765), and Token
+
+2. WRITE DOWN these three things:
+   └─ IP Address: _______________ (e.g., 192.168.1.100)
+   └─ Port: 8765
+   └─ Token: _______________ (long random string)
+
+3. KEEP THIS APP OPEN - don't close it!
+   └─ The bridge needs to keep running for phone to connect
+   └─ You can minimize it but don't quit it
+
+4. Open FL Studio
+   └─ Load your project with Kontakt instrument
+   └─ Go to Options → MIDI Settings
+   └─ Select "MIDIFlow Bridge" as input port
+   └─ Set Controller type to "MIDIFlow"
+   └─ Click OK
+
+═══════════════════════════════════════════════════════════════════════════════
+                         STEP 2: PHONE SETUP (2 min)
+═══════════════════════════════════════════════════════════════════════════════
+
+1. Make sure phone is on SAME Wi-Fi as laptop
+   └─ Or use phone hotspot if church Wi-Fi doesn't work
+
+2. Open MIDIFlow app on your phone
+   └─ Go to Settings tab
+   └─ Find "Connect to computer" section
+
+3. Enter the laptop details:
+   └─ Computer address: [paste IP from step 1]
+   └─ Port: 8765
+   └─ Token: [paste token from step 1]
+
+4. Tap "Connect" button
+   └─ Should show "Connected" status
+   └─ If it fails, check Wi-Fi and try again
+
+5. Go to "Play" tab
+   └─ You should see all your controls (Instrument, Transport, etc.)
+   └─ Try moving a layer fader to test
+
+═══════════════════════════════════════════════════════════════════════════════
+                         STEP 3: KONTAKT VERIFICATION (3 min)
+═══════════════════════════════════════════════════════════════════════════════
+
+1. In FL Studio, open your Kontakt instrument
+   └─ Should be on Channel Rack or Mixer
+
+2. Check plugin settings:
+   └─ Right-click plugin → Plugin settings
+   └─ Find "MIDI input port" setting
+   └─ Set it to: 10
+
+3. Test MIDI Learn (if needed):
+   └─ In Kontakt, click "Learn MIDI CC" button
+   └─ Move a layer fader on phone
+   └─ Should assign automatically to that layer volume
+   └─ Repeat for other layers if needed
+
+4. Test controls:
+   └─ Move layer volume fader → layer should change
+   └─ Tap layer on/off → layer should mute/unmute
+   └─ Tap a pad → assigned parameter should change
+   └─ Press transport buttons → FL Studio should respond
+
+═══════════════════════════════════════════════════════════════════════════════
+                         STEP 4: FINAL CHECKS (2 min)
+═══════════════════════════════════════════════════════════════════════════════
+
+□ Phone connected to Wi-Fi (same as laptop)
+□ MIDIFlow app open on both devices
+□ FL Studio bridge showing "Running" status
+□ Phone shows "Connected" to bridge
+□ All layer faders move smoothly
+□ Pads respond when tapped
+□ Transport controls work
+□ You can hear audio from Kontakt
+
+═══════════════════════════════════════════════════════════════════════════════
+                         TROUBLESHOOTING QUICK FIXES
+═══════════════════════════════════════════════════════════════════════════════
+
+If phone can't connect:
+  → Check both devices on same Wi-Fi
+  → Try phone hotspot instead
+  → Restart MIDIFlow app on both
+  → Verify IP address is correct
+
+If controls don't work:
+  → Check FL Studio MIDI settings (controller type = MIDIFlow)
+  → Verify Kontakt MIDI input port = 10
+  → Restart FL Studio
+  → Re-learn MIDI assignments in Kontakt if needed
+
+If app crashes:
+  → Force close and reopen
+  → Restart phone/laptop if needed
+  → Check battery level
+
+═══════════════════════════════════════════════════════════════════════════════
+                         EMERGENCY BACKUP
+═══════════════════════════════════════════════════════════════════════════════
+
+If MIDIFlow fails completely:
+  → Use FL Studio's mouse/keyboard controls
+  → Use on-screen Channel Rack and Mixer
+  → You can still play the service without remote!
+  → Don't panic - the music is what matters
+
+═══════════════════════════════════════════════════════════════════════════════
+                         WHAT TO BRING
+═══════════════════════════════════════════════════════════════════════════════
+
+□ Laptop (charged, with FL Studio project saved)
+□ Phone (charged, with MIDIFlow installed)
+□ Church Wi-Fi password OR phone with data for hotspot
+□ This checklist (printed or on phone)
+□ Backup USB drive with project files
+□ Power cables for laptop and phone
+
+═══════════════════════════════════════════════════════════════════════════════
+                         GOOD LUCK!
+═══════════════════════════════════════════════════════════════════════════════
+
+You've tested this and it works. Trust your preparation.
+The remote is a tool - the music is the goal.
+
+If something goes wrong, adapt and keep playing.
+You've got this! 🎵
+
+═══════════════════════════════════════════════════════════════════════════════

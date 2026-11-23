@@ -1,0 +1,175 @@
+═══════════════════════════════════════════════════════════════════════════════
+                    MIDIFlow CHURCH GIG CHECKLIST
+                    Last Updated: November 23, 2026
+═══════════════════════════════════════════════════════════════════════════════
+
+BEFORE THE SERVICE (Day Before or Morning Of)
+───────────────────────────────────────────────────────────────────────────────
+
+□ 1. VERIFY INSTALLERS ARE CURRENT
+   └─ Check these files exist and are the latest versions:
+      • setup/app-installers/android/MIDIFlow.apk (52.3MB)
+      • setup/app-installers/macos/MIDIFlow-macos.zip (18.5MB)
+   └─ If you made any changes since last build, rebuild:
+      cd /Users/user/Projects/midiflow
+      flutter build macos --release
+      flutter build apk --release
+
+□ 2. TEST CONNECTION (Do This at Home First!)
+   └─ Laptop: Open MIDIFlow app → Desktop Bridge screen
+   └─ Phone: Open MIDIFlow app → Settings → Connect to computer
+   └─ Enter laptop IP + token from bridge screen
+   └─ Verify connection shows "Connected" on both
+   └─ Test a few faders/pads to confirm MIDI reaches FL Studio
+
+□ 3. FL STUDIO SETUP VERIFICATION
+   └─ Open FL Studio → Options → MIDI Settings
+   └─ Confirm "MIDIFlow" appears in Controller type dropdown
+   └─ Select it and set Input port to MIDIFlow Bridge
+   └─ Verify the script file exists:
+      /Users/user/Music/MONTAGE-M-patch-3.0.0-osx.app/FL Studio/Settings/
+      Hardware/MIDIFlow/device_midiflow.py
+   └─ If missing, copy from: setup/church-gig-backup/MIDIFlow/
+
+□ 4. KONTAKT INSTRUMENT SETUP
+   └─ Load your instrument (e.g., MONTAGEM8 BISPO)
+   └─ In Kontakt: Set MIDI input port to 10 (plugin wrapper settings)
+   └─ Use Kontakt Learn to assign:
+      • CC20-27 → Layer volumes (8 layers)
+      • CC28-35 → Layer on/off toggles
+      • CC36-47 → Continuous pads
+      • CC48 → Pad volume
+      • CC48-63 → Drum pads (if using drums bank)
+      • CC96-107 → Effects parameters
+   └─ SAVE YOUR KONTAKT PROJECT with these assignments!
+
+□ 5. TEST ALL CONTROLS
+   └─ Layer volumes: Move faders, verify layers respond
+   └─ Layer toggles: Tap on/off, verify layers mute/unmute
+   └─ Continuous pads: Tap pads, verify assigned parameters change
+   └─ Pad volume: Drag horizontal fader, verify master pad volume
+   └─ Transport: Play/pause/stop/record buttons
+   └─ Mixer: Channel volumes and pans
+   └─ Effects: FX parameters respond
+
+□ 6. BACKUP YOUR SETUP
+   └─ Save FL Studio project (.flp file) with all settings
+   └─ Save Kontakt project with Learn assignments
+   └─ Copy backup files to USB drive or cloud storage
+   └─ Keep a printed copy of this checklist
+
+AT THE CHURCH (Before Service)
+───────────────────────────────────────────────────────────────────────────────
+
+□ 7. NETWORK CHECK
+   └─ Connect laptop and phone to church Wi-Fi
+   └─ NOTE: Church Wi-Fi may have client isolation (devices can't see each other)
+   └─ If connection fails, ask church tech about network settings
+   └─ Alternative: Use phone hotspot (laptop connects to phone's hotspot)
+
+□ 8. GET LAPTOP IP ADDRESS
+   └─ On laptop: System Settings → Wi-Fi → Details → IP Address
+   └─ Or open MIDIFlow → Desktop Bridge screen (shows IP automatically)
+   └─ Write down the IP (e.g., 192.168.1.100)
+
+□ 9. CONNECT PHONE
+   └─ Phone: Open MIDIFlow → Settings → Connect to computer
+   └─ Enter laptop IP address and port 8765
+   └─ Enter token from laptop bridge screen
+   └─ Tap Connect
+   └─ Verify "Connected" status on both devices
+
+□ 10. FINAL TEST
+    └─ Play a few notes on Kontakt keyboard
+    └─ Move a layer fader — verify it works
+    └─ Tap a pad — verify it responds
+    └─ Test transport controls
+    └─ If anything fails, check FL Studio MIDI settings and restart if needed
+
+DURING SERVICE
+───────────────
+
+□ 11. KEEP MIDIFlow APP OPEN
+    └─ Don't minimize or close the app on phone or laptop
+    └─ If using phone hotspot, keep phone screen on (or set to never sleep)
+
+□ 12. MONITOR CONNECTION
+    └─ If controls stop working, check:
+       • Phone still connected to Wi-Fi?
+       • Laptop bridge still running?
+       • FL Studio still open?
+    └─ Reconnect if needed: Settings → Connect to computer → Connect
+
+TROUBLESHOOTING
+───────────────
+
+Problem: Can't connect phone to laptop
+  → Check both on same Wi-Fi network
+  → Verify IP address is correct (church Wi-Fi may differ from home)
+  → Try phone hotspot as alternative
+  → Restart MIDIFlow app on both devices
+  → Check laptop firewall isn't blocking port 8765
+
+Problem: Controls show green signal in FL Studio but don't work
+  → Verify Kontakt plugin MIDI input port is set to 10
+  → Check FL Studio controller type is "MIDIFlow" not "Generic Controller"
+  → Restart FL Studio and reconnect
+
+Problem: Layer faders move but Kontakt doesn't respond
+  → Kontakt Learn assignments might be lost — reassign them
+  → Check Kontakt is receiving MIDI (enable MIDI activity monitor)
+  → Verify plugin wrapper MIDI port setting is correct
+
+Problem: App crashes or freezes
+  → Force close and reopen MIDIFlow
+  → Restart phone/laptop if needed
+  → Check battery level — low battery can cause issues
+
+EMERGENCY BACKUP PLAN
+─────────────────────
+
+If MIDIFlow fails completely:
+  □ Use FL Studio's on-screen controls (Channel Rack, Mixer)
+  □ Use mouse/keyboard for critical functions
+  □ Have a second device ready (tablet, second phone)
+  □ Keep printed lyrics/chords handy
+  □ Assign a volunteer to help with laptop if needed
+
+═══════════════════════════════════════════════════════════════════════════════
+                         QUICK REFERENCE CARD
+═══════════════════════════════════════════════════════════════════════════════
+
+LAPTOP SETUP:
+1. Open MIDIFlow → Desktop Bridge
+2. Note the IP address and token
+3. Keep app open and bridge running
+
+PHONE SETUP:
+1. Open MIDIFlow → Settings
+2. Enter laptop IP + port 8765 + token
+3. Tap Connect
+4. Go to Play screen
+
+FL STUDIO:
+1. Options → MIDI Settings
+2. Controller type: MIDIFlow
+3. Input port: MIDIFlow Bridge
+
+KONTAKT:
+1. Plugin MIDI input port: 10
+2. Learn CC20-27 for layer volumes
+3. Learn CC28-35 for layer toggles
+4. Learn CC36-47 for continuous pads
+5. Learn CC48 for pad volume
+
+═══════════════════════════════════════════════════════════════════════════════
+                         SUPPORT CONTACT
+═══════════════════════════════════════════════════════════════════════════════
+
+If you need help during the service:
+- Check this checklist first
+- Try restarting the app
+- Use FL Studio's built-in controls as backup
+- Don't panic — you can always play without the remote!
+
+═══════════════════════════════════════════════════════════════════════════════
