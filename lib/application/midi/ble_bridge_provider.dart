@@ -42,6 +42,7 @@ class BleBridgeState {
 /// Allows phones/tablets to connect via Bluetooth LE instead of Wi-Fi.
 class BleBridgeController extends Notifier<BleBridgeState> {
   BleMidiPeripheral? _peripheral;
+  MidiDeviceInfo? _bleEndpoint;
   StreamSubscription<List<int>>? _midiDataSub;
   StreamSubscription<String>? _connectionSub;
 
@@ -56,6 +57,12 @@ class BleBridgeController extends Notifier<BleBridgeState> {
     state = state.copyWith(starting: true, clearError: true);
 
     try {
+      // Create dedicated virtual MIDI endpoint for BLE bridge
+      final midiService = ref.read(midiServiceProvider);
+      _bleEndpoint = await midiService.createBridgeEndpoint(
+        name: 'MIDIFlow BLE Bridge',
+      );
+
       _peripheral = BleMidiPeripheral();
 
       // Initialize BLE peripheral
@@ -109,17 +116,16 @@ class BleBridgeController extends Notifier<BleBridgeState> {
   }
 
   void _sendToMidiService(MidiMessage message) {
-    // Convert parsed MIDI message to standard MIDI and send to FL Studio
-    // This integrates with the existing MIDI service
+    // Send to dedicated BLE endpoint (independent from Wi-Fi bridge)
     final midiService = ref.read(midiServiceProvider);
-    final device = _getSelectedDevice();
+    final device = _bleEndpoint;
 
     if (device == null) return;
 
     if (message.kind == MidiMessageKind.controlChange &&
         message.controller != null &&
         message.value != null) {
-      // Send CC message
+      // Send CC message to BLE endpoint
       midiService.sendControlChange(
         device: device,
         channel: message.channel ?? 1,
@@ -127,12 +133,6 @@ class BleBridgeController extends Notifier<BleBridgeState> {
         value: message.value!,
       );
     }
-  }
-
-  MidiDeviceInfo? _getSelectedDevice() {
-    // Get the currently selected MIDI device
-    final midiState = ref.read(midiControllerProvider);
-    return midiState.selectedDevice;
   }
 
   /// Sends MIDI data to connected BLE clients.
@@ -145,6 +145,14 @@ class BleBridgeController extends Notifier<BleBridgeState> {
     await _midiDataSub?.cancel();
     await _connectionSub?.cancel();
     await _peripheral?.dispose();
+
+    // Remove dedicated BLE endpoint
+    if (_bleEndpoint != null) {
+      final midiService = ref.read(midiServiceProvider);
+      await midiService.removeBridgeEndpoint(name: 'MIDIFlow BLE Bridge');
+      _bleEndpoint = null;
+    }
+
     _peripheral = null;
     _midiDataSub = null;
     _connectionSub = null;
