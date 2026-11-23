@@ -14,8 +14,8 @@ class UsbMidiScreen extends ConsumerWidget {
     final midi = ref.watch(midiControllerProvider);
     final controller = ref.read(midiControllerProvider.notifier);
 
-    // Filter for USB devices only
-    final usbDevices = midi.devices
+    // Filter for USB devices only (already filtered by connection mode)
+    final usbDevices = midi.filteredDevices
         .where((d) => d.kind == MidiDeviceKind.usb)
         .toList();
 

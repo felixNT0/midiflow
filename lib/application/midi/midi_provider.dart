@@ -16,12 +16,16 @@ final midiServiceProvider = Provider<MidiService>((ref) {
 /// Maximum number of entries kept in the incoming message log.
 const int midiLogMaxEntries = 200;
 
+/// Connection mode for MIDI devices.
+enum ConnectionMode { wifi, ble, usb, auto }
+
 /// Immutable UI-facing MIDI state.
 class MidiState {
   const MidiState({
     this.status = MidiEngineStatus.uninitialized,
     this.devices = const [],
     this.selectedDeviceId,
+    this.connectionMode = ConnectionMode.auto,
     this.channel = 1,
     this.controller = 7,
     this.ccValue = 100,
@@ -33,12 +37,30 @@ class MidiState {
   final MidiEngineStatus status;
   final List<MidiDeviceInfo> devices;
   final String? selectedDeviceId;
+  final ConnectionMode connectionMode;
   final int channel;
   final int controller;
   final int ccValue;
   final List<MidiIncomingMessage> messages;
   final String? error;
   final bool busy;
+
+  /// Devices filtered by connection mode.
+  List<MidiDeviceInfo> get filteredDevices {
+    if (connectionMode == ConnectionMode.auto) return devices;
+    return devices.where((d) {
+      switch (connectionMode) {
+        case ConnectionMode.wifi:
+          return d.kind == MidiDeviceKind.network;
+        case ConnectionMode.ble:
+          return d.kind == MidiDeviceKind.ble;
+        case ConnectionMode.usb:
+          return d.kind == MidiDeviceKind.usb;
+        case ConnectionMode.auto:
+          return true;
+      }
+    }).toList();
+  }
 
   MidiDeviceInfo? get selectedDevice {
     for (final d in devices) {
@@ -54,6 +76,7 @@ class MidiState {
     List<MidiDeviceInfo>? devices,
     String? selectedDeviceId,
     bool clearSelectedDevice = false,
+    ConnectionMode? connectionMode,
     int? channel,
     int? controller,
     int? ccValue,
@@ -68,6 +91,7 @@ class MidiState {
       selectedDeviceId: clearSelectedDevice
           ? null
           : (selectedDeviceId ?? this.selectedDeviceId),
+      connectionMode: connectionMode ?? this.connectionMode,
       channel: channel ?? this.channel,
       controller: controller ?? this.controller,
       ccValue: ccValue ?? this.ccValue,
@@ -153,6 +177,31 @@ class MidiController extends Notifier<MidiState> {
     state = state.copyWith(
       selectedDeviceId: deviceId,
       clearSelectedDevice: deviceId == null,
+      clearError: true,
+    );
+  }
+
+  /// Sets the connection mode and disconnects incompatible devices.
+  void setConnectionMode(ConnectionMode mode) {
+    if (mode == state.connectionMode) return;
+
+    // Disconnect current device if it's not compatible with new mode
+    final currentDevice = state.selectedDevice;
+    if (currentDevice != null && currentDevice.isConnected) {
+      final isCompatible = switch (mode) {
+        ConnectionMode.wifi => currentDevice.kind == MidiDeviceKind.network,
+        ConnectionMode.ble => currentDevice.kind == MidiDeviceKind.ble,
+        ConnectionMode.usb => currentDevice.kind == MidiDeviceKind.usb,
+        ConnectionMode.auto => true,
+      };
+      if (!isCompatible) {
+        _service.disconnect(currentDevice);
+      }
+    }
+
+    state = state.copyWith(
+      connectionMode: mode,
+      clearSelectedDevice: true, // Clear selection when switching modes
       clearError: true,
     );
   }

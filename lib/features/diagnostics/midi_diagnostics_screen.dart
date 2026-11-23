@@ -91,7 +91,7 @@ class _DeviceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final devices = state.devices;
+    final devices = state.filteredDevices;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),

@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/midi/bridge_provider.dart';
 import '../../application/midi/controls_provider.dart';
-import '../../application/midi/midi_provider.dart';
+import '../../application/midi/midi_provider.dart' show midiControllerProvider, MidiState, MidiEngineStatus, ConnectionMode;
 import '../../application/settings/theme_mode_provider.dart';
 import '../../domain/midi/control_bank.dart';
 import '../../domain/midi/midi_control.dart';
@@ -112,6 +112,58 @@ class _GeneralTab extends ConsumerWidget {
         ),
         const SizedBox(height: 16),
         Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Connection Mode',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Select which connection method to use. Other methods will be disabled to prevent interference.',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: SegmentedButton<ConnectionMode>(
+                    segments: const [
+                      ButtonSegment(
+                        value: ConnectionMode.auto,
+                        icon: Icon(Icons.auto_fix_high),
+                        label: Text('Auto'),
+                      ),
+                      ButtonSegment(
+                        value: ConnectionMode.wifi,
+                        icon: Icon(Icons.wifi),
+                        label: Text('Wi-Fi'),
+                      ),
+                      ButtonSegment(
+                        value: ConnectionMode.ble,
+                        icon: Icon(Icons.bluetooth),
+                        label: Text('BLE'),
+                      ),
+                      ButtonSegment(
+                        value: ConnectionMode.usb,
+                        icon: Icon(Icons.usb),
+                        label: Text('USB'),
+                      ),
+                    ],
+                    selected: {state.connectionMode},
+                    onSelectionChanged: (selection) => ref
+                        .read(midiControllerProvider.notifier)
+                        .setConnectionMode(selection.first),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Card(
           child: Column(
             children: [
               ListTile(
@@ -130,7 +182,7 @@ class _GeneralTab extends ConsumerWidget {
               ListTile(
                 leading: const Icon(Icons.devices),
                 title: const Text('Devices'),
-                subtitle: Text('${state.devices.length} discovered'),
+                subtitle: Text('${state.filteredDevices.length} discovered'),
               ),
             ],
           ),

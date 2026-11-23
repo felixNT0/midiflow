@@ -14,8 +14,8 @@ class BleMidiScreen extends ConsumerWidget {
     final midi = ref.watch(midiControllerProvider);
     final controller = ref.read(midiControllerProvider.notifier);
 
-    // Filter for BLE devices only
-    final bleDevices = midi.devices
+    // Filter for BLE devices only (already filtered by connection mode)
+    final bleDevices = midi.filteredDevices
         .where((d) => d.kind == MidiDeviceKind.ble)
         .toList();
 
