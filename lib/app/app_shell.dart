@@ -2,14 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../features/play/play_screen.dart';
 import '../features/settings/settings_screen.dart';
-// Hidden for now — uncomment to restore the Assign and Profiles tabs:
-// import '../features/assign/assign_screen.dart';
-// import '../features/profiles/profiles_screen.dart';
 import '../shared/theme/app_theme.dart';
 
-/// Responsive shell with the two primary destinations: Play and Settings.
-/// Assign and Profiles are hidden until their workflows are finalised —
-/// see the commented lines below to bring them back.
+/// Responsive shell with two primary destinations: Play and Settings.
+/// Assign and Profiles are accessed via Settings screen.
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
 
@@ -20,14 +16,6 @@ class AppShell extends StatefulWidget {
 class _AppShellState extends State<AppShell> {
   int _index = 0;
 
-  // Restore the full four-tab bar by uncommenting the two entries and
-  // adjusting _body() / onOpenSettings accordingly:
-  //   static const _destinations = [
-  //     (icon: Icons.play_circle_outline, label: 'Play'),
-  //     (icon: Icons.tune, label: 'Assign'),
-  //     (icon: Icons.folder_copy_outlined, label: 'Profiles'),
-  //     (icon: Icons.settings_outlined, label: 'Settings'),
-  //   ];
   static const _destinations = [
     (icon: Icons.play_circle_outline, label: 'Play'),
     (icon: Icons.settings_outlined, label: 'Settings'),
@@ -41,8 +29,6 @@ class _AppShellState extends State<AppShell> {
         key: const ValueKey('play'),
         onOpenSettings: () => _goTo(1),
       ),
-      // 1 => const AssignScreen(key: ValueKey('assign')),
-      // 2 => const ProfilesScreen(key: ValueKey('profiles')),
       _ => const SettingsScreen(key: ValueKey('settings')),
     };
   }

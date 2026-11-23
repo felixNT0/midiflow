@@ -75,6 +75,18 @@ class ControlsController extends Notifier<ControlsState> {
     );
   }
 
+  /// Loads control banks from a saved profile.
+  void loadFromBanks(List<ControlBank> banks, {int activeBankIndex = 0}) {
+    state = ControlsState(
+      banks: banks,
+      activeBankIndex: activeBankIndex.clamp(0, banks.length - 1),
+      selectedControlId: banks.isNotEmpty && banks[activeBankIndex.clamp(0, banks.length - 1)].controls.isNotEmpty
+          ? banks[activeBankIndex.clamp(0, banks.length - 1)].controls.first.id
+          : null,
+    );
+    unawaited(savePersisted());
+  }
+
   /// Loads persisted control labels and values from SharedPreferences.
   /// Call this after the provider is first built.
   Future<void> loadPersisted() async {

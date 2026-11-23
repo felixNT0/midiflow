@@ -11,8 +11,11 @@ import '../../domain/midi/midi_control.dart';
 import '../../infrastructure/midi/midi_service.dart';
 import '../../infrastructure/midi/network/bridge_client.dart';
 import '../../infrastructure/midi/network/bridge_protocol.dart';
+import '../assign/assign_screen.dart';
 import '../bridge/bridge_screen.dart';
+import '../diagnostics/midi_activity_monitor.dart';
 import '../diagnostics/midi_diagnostics_screen.dart';
+import '../profiles/profiles_screen.dart';
 
 /// App settings: connection shortcuts and engine status. Detailed MIDI
 /// controls live on the diagnostics screen.
@@ -140,9 +143,29 @@ class SettingsScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 16),
+          _NavigationCard(
+            icon: Icons.tune,
+            title: 'Assign Controls',
+            subtitle: 'Edit MIDI mappings, CC numbers, and channels for each control',
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const AssignScreen()),
+            ),
+          ),
+          const SizedBox(height: 8),
+          _NavigationCard(
+            icon: Icons.folder_copy_outlined,
+            title: 'Profiles',
+            subtitle: 'Save and load different control layouts for different songs/venues',
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const ProfilesScreen()),
+            ),
+          ),
+          const SizedBox(height: 16),
           const _SetupGuidesCard(),
           const SizedBox(height: 16),
           const _ControlLabelsCard(),
+          const SizedBox(height: 16),
+          const MidiActivityMonitor(),
         ],
       ),
     );
@@ -665,6 +688,34 @@ class _ControlLabelTile extends StatelessWidget {
             child: const Text('Save'),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Navigation card for accessing secondary screens (Assign, Profiles).
+class _NavigationCard extends StatelessWidget {
+  const _NavigationCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: ListTile(
+        leading: Icon(icon),
+        title: Text(title),
+        subtitle: Text(subtitle),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: onTap,
       ),
     );
   }
